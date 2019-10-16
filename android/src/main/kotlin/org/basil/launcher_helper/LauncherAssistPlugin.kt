@@ -71,7 +71,7 @@ class LauncherHelperPlugin(registrar: Registrar): MethodCallHandler {
     @JvmStatic
     fun registerWith(registrar: Registrar) {
       val channel = MethodChannel(registrar.messenger(), "launcher_helper")
-      channel.setMethodCallHandler(LauncherHelperPlugin())
+      channel.setMethodCallHandler(LauncherHelperPlugin(registrar))
     }
 
     fun convertToBytes(image: Bitmap, compressFormat: Bitmap.CompressFormat, quality: Int): ByteArray {
@@ -85,7 +85,7 @@ class LauncherHelperPlugin(registrar: Registrar): MethodCallHandler {
     if (call.method =="getAllApps") {
       getAllApps(result)
     } else  if (call.method =="launchApp") {
-      launchApp(call.argument("packageName").toString())
+      launchApp(call.argument<String>("packageName").toString())
     } else  if (call.method == "getWallpaper") {
       getWallpaper(result)
     } else  {
