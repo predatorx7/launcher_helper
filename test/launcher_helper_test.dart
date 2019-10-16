@@ -16,6 +16,6 @@ void main() {
   });
 
   test('getPlatformVersion', () async {
-//    expect(await LauncherAssist.platformVersion, '42');
+//    expect(await LauncherHelper.platformVersion, '42');
   });
 }
