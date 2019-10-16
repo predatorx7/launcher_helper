@@ -1,6 +1,6 @@
 # launcher_helper
 
-This package helps to get list of installed applications, launching them application and getting phone's wallpaper. It only supports Android.
+This package helps to reduce work when creating a launcher. In the current build, it can get list of installed applications, launching them and getting phone's wallpaper. Only Android is supported.
 
 ## Usage
 
