@@ -1,14 +1,7 @@
-# launcher_assist
+# launcher_helper
 
-A new flutter plugin project.
+This package helps to get list of installed applications, launching them application and getting phone's wallpaper. It only supports Android.
 
-## Getting Started
+import package as: `import 'package:launcher_helper/launcher_helper.dart';`
 
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.dev/developing-packages/),
-a specialized package that includes platform-specific implementation code for
-Android and/or iOS.
-
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.dev/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
+This package is based on `launcher_assist` by Ashraff Hathibelagal

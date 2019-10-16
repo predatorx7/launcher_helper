@@ -1,5 +1,5 @@
 name: launcher_assist_example
-description: Demonstrates how to use the launcher_assist plugin.
+description: Demonstrates how to use the launcher_helper plugin.
 publish_to: 'none'
 
 environment:
@@ -17,7 +17,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  launcher_assist:
+  launcher_helper:
     path: ../
 
 # For information on the generic Dart part of this file, see the

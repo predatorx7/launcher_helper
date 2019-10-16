@@ -1,4 +1,4 @@
-group 'org.basil.launcher_assist'
+group 'org.basil.launcher_helper'
 version '1.0-SNAPSHOT'
 
 buildscript {
