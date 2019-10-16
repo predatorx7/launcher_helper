@@ -8,4 +8,5 @@ This package helps to get list of installed applications, launching them applica
 - Import package as: `import 'package:launcher_helper/launcher_helper.dart';`
 
 ### Note
+
 _This package is based on `launcher_assist` by Ashraff Hathibelagal_

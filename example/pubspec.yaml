@@ -1,4 +1,4 @@
-name: launcher_assist_example
+name: launcher_helper_example
 description: Demonstrates how to use the launcher_helper plugin.
 publish_to: 'none'
 

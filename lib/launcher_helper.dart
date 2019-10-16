@@ -35,7 +35,8 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 
 class LauncherHelper {
-  static const MethodChannel _channel = const MethodChannel('launcher_helper');
+  static const MethodChannel _channel =
+      const MethodChannel('launcher_helper');
 
   /// Returns a list of apps installed on the user's device
   static Future get getAllApps async {
@@ -44,8 +45,8 @@ class LauncherHelper {
   }
 
   /// Launches an app using its package name
-  static launchApp(String packageName) {
-    _channel.invokeMethod("launchApp", {"packageName": packageName});
+  static Future launchApp(String packageName) async {
+    await _channel.invokeMethod("launchApp", {"packageName": packageName});
   }
 
   /// Gets you the current wallpaper on the user's device. This method

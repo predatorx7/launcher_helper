@@ -150,10 +150,7 @@ private fun getAllApps(result: MethodChannel.Result) {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-
     }
-
     result.success(_output)
   }
-
 }

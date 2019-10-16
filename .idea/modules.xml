@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/launcher_assist.iml" filepath="$PROJECT_DIR$/launcher_assist.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/launcher_assist_android.iml" filepath="$PROJECT_DIR$/android/launcher_assist_android.iml" />
-      <module fileurl="file://$PROJECT_DIR$/example/android/launcher_assist_example_android.iml" filepath="$PROJECT_DIR$/example/android/launcher_assist_example_android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/launcher_helper.iml" filepath="$PROJECT_DIR$/launcher_helper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/launcher_helper_android.iml" filepath="$PROJECT_DIR$/android/launcher_helper_android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/example/android/launcher_helper_example_android.iml" filepath="$PROJECT_DIR$/example/android/launcher_helper_example_android.iml" />
     </modules>
   </component>
 </project>

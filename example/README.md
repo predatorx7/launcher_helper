@@ -1,6 +1,6 @@
-# launcher_assist_example
+# launcher_helper_example
 
-Demonstrates how to use the launcher_assist plugin.
+Demonstrates how to use the launcher_helper plugin.
 
 ## Getting Started
 
