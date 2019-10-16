@@ -94,14 +94,17 @@ class _MyAppState extends State<MyApp> {
                 LauncherHelper.launchApp(installedApps[0]["package"]);
               },
             ),
-//            wallpaper != null
-//                ? new Image.memory(wallpaper, fit: BoxFit.scaleDown)
-//                : new Center(),
-            Visibility(
-              child: Image.memory(wallpaper, fit: BoxFit.scaleDown),
-              replacement: const SizedBox.shrink(), // new Center(),
-              visible: wallpaper != null,
-            ),
+            // Display wallpaper like the example below
+            wallpaper != null
+                ? new Image.memory(wallpaper, fit: BoxFit.scaleDown)
+                : new Center(),
+
+            // Don't use the below method to display wallpaper, may cause issue in the current build.
+            // Visibility(
+            //   child: Image.memory(wallpaper, fit: BoxFit.scaleDown),
+            //   replacement: const SizedBox.shrink(), // new Center(),
+            //   visible: wallpaper != null,
+            // ),
           ],
         ),
       ),

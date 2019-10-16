@@ -31,6 +31,7 @@
 /// limitations under the License.
 
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 
@@ -39,7 +40,7 @@ class LauncherHelper {
       const MethodChannel('launcher_helper');
 
   /// Returns a list of apps installed on the user's device
-  static Future get getAllApps async {
+  static Future<List> get getAllApps async {
     var data = await _channel.invokeMethod('getAllApps');
     return data;
   }
@@ -51,7 +52,7 @@ class LauncherHelper {
 
   /// Gets you the current wallpaper on the user's device. This method
   /// needs the READ_EXTERNAL_STORAGE permission on Android Oreo & above.
-  static Future get getWallpaper async {
+  static Future<Uint8List> get getWallpaper async {
     var data = await _channel.invokeMethod('getWallpaper');
     return data;
   }

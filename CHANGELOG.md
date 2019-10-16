@@ -2,4 +2,17 @@
 
 ## 0.1.0
 
-* TODO: Constructed files from previous project with Androidx and Migration to Kotlin
+Constructed files from previous project with Androidx support with Kotlin
+
+### What works
+
+- Getting Application List
+- Launching Apps
+- Getting App icons
+
+### What doesn't work
+
+- Fetching wallpaper
+- Setting Wallpaper
+- Getting Live wallpaper
+- Setting Live wallpaper
