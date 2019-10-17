@@ -46,6 +46,7 @@ import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.util.Log
@@ -58,100 +59,133 @@ import java.util.ArrayList
 import java.util.HashMap
 
 
-class LauncherHelperPlugin(registrar: Registrar): MethodCallHandler {
+class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
 
-  private var wallpaperData: ByteArray? = null
-  private val registrar: PluginRegistry.Registrar
+    private var wallpaperData: ByteArray? = null
+    private val registrar: PluginRegistry.Registrar
 
-  init {
-    this.registrar = registrar
-  }
-
-  companion object {
-    @JvmStatic
-    fun registerWith(registrar: Registrar) {
-      val channel = MethodChannel(registrar.messenger(), "launcher_helper")
-      channel.setMethodCallHandler(LauncherHelperPlugin(registrar))
+    init {
+        this.registrar = registrar
     }
 
-    fun convertToBytes(image: Bitmap, compressFormat: Bitmap.CompressFormat, quality: Int): ByteArray {
-      val byteArrayOS = ByteArrayOutputStream()
-      image.compress(compressFormat, quality, byteArrayOS)
-      return byteArrayOS.toByteArray()
-  }
-  }
+    companion object {
+        @JvmStatic
+        fun registerWith(registrar: Registrar) {
+            val channel = MethodChannel(registrar.messenger(), "launcher_helper")
+            channel.setMethodCallHandler(LauncherHelperPlugin(registrar))
+        }
 
-  override fun onMethodCall(call: MethodCall, result: Result) {
-    if (call.method =="getAllApps") {
-      getAllApps(result)
-    } else  if (call.method =="launchApp") {
-      launchApp(call.argument<String>("packageName").toString())
-    } else  if (call.method == "getWallpaper") {
-      getWallpaper(result)
-    } else  {
-      result.notImplemented()
-    }
-  }
-
-  private fun getWallpaper(result: MethodChannel.Result) {
-    print("[LauncherHelper] External Storage Access permission might be needed to get wallpapers.")
-    if (wallpaperData != null) {
-        result.success(wallpaperData)
-        return
-    }
-
-    val wallpaperManager = WallpaperManager.getInstance(registrar.context())
-    val wallpaperDrawable = wallpaperManager.drawable
-    if (wallpaperDrawable is BitmapDrawable) {
-        wallpaperData = convertToBytes(wallpaperDrawable.bitmap,
-                Bitmap.CompressFormat.JPEG, 100)
-        result.success(wallpaperData)
-    }
-  }
-
-  private fun launchApp(packageName: String) {
-    val i = registrar.context().getPackageManager().getLaunchIntentForPackage(packageName)
-    if (i != null)
-        registrar.context().startActivity(i)
-}
-
-private fun getBitmapFromDrawable(drawable: Drawable): Bitmap {
-    val bmp = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bmp)
-    drawable.setBounds(0, 0, canvas.width, canvas.height)
-    drawable.draw(canvas)
-    return bmp
-}
-
-private fun getAllApps(result: MethodChannel.Result) {
-
-    val intent = Intent(Intent.ACTION_MAIN, null)
-    intent.addCategory(Intent.CATEGORY_LAUNCHER)
-
-    val manager = registrar.context().getPackageManager()
-    val resList = manager.queryIntentActivities(intent, 0)
-
-    val _output = ArrayList<Map<String, Any>>()
-
-    for (resInfo in resList) {
-        try {
-            val app = manager.getApplicationInfo(
-                    resInfo.activityInfo.packageName, PackageManager.GET_META_DATA)
-            if (manager.getLaunchIntentForPackage(app.packageName) != null) {
-
-                val iconData = convertToBytes(getBitmapFromDrawable(app.loadIcon(manager)),
-                        Bitmap.CompressFormat.PNG, 100)
-
-                val current = HashMap<String, Any>()
-                current["label"] = app.loadLabel(manager).toString()
-                current["icon"] = iconData
-                current["package"] = app.packageName
-                _output.add(current)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        fun convertToBytes(image: Bitmap, compressFormat: Bitmap.CompressFormat, quality: Int): ByteArray {
+            val byteArrayOS = ByteArrayOutputStream()
+            image.compress(compressFormat, quality, byteArrayOS)
+            return byteArrayOS.toByteArray()
         }
     }
-    result.success(_output)
-  }
+
+    override fun onMethodCall(call: MethodCall, result: Result) {
+        if (call.method == "getAllApps") {
+            getAllApps(result)
+        } else if (call.method == "launchApp") {
+            launchApp(call.argument<String>("packageName").toString())
+        } else if (call.method == "getWallpaper") {
+            getWallpaper(result)
+        } else if (call.method == "getWallpaperBrightness") {
+            getWallpaperBrightness(result, call.argument<Int>("skipPixel").toInt())
+        } else {
+            result.notImplemented()
+        }
+    }
+
+    private fun getWallpaper(result: MethodChannel.Result) {
+        print("[LauncherHelper] External Storage Access permission might be needed to get wallpapers.")
+        if (wallpaperData != null) {
+            result.success(wallpaperData)
+            return
+        }
+
+        val wallpaperManager = WallpaperManager.getInstance(registrar.context())
+        val wallpaperDrawable = wallpaperManager.drawable
+        if (wallpaperDrawable is BitmapDrawable) {
+            wallpaperData = convertToBytes(wallpaperDrawable.bitmap,
+                    Bitmap.CompressFormat.JPEG, 100)
+            result.success(wallpaperData)
+        }
+    }
+
+    private fun getWallpaperBrightness(result: MethodChannel.Result, skipPixel: Int) {
+        val wallpaperManager = WallpaperManager.getInstance(registrar.context())
+        val wallpaperDrawable = wallpaperManager.drawable
+        if (wallpaperDrawable is BitmapDrawable) {
+            val brightness = calculateBrightness(wallpaperDrawable.bitmap, skipPixel)
+            result.success(brightness)
+        }
+    }
+
+    // Returns the brightness for an image
+    private fun calculateBrightness(image: Bitmap, skipPixel: Int): Int {
+        var r = 0
+        var g = 0
+        var b = 0
+        val height = image.height
+        val width = image.width
+        var n = 0
+        val pixels = IntArray(width * height)
+        image.getPixels(pixels, 0, width, 0, 0, width, height)
+        var i = 0
+        while (i < pixels.size) {
+            val color = pixels[i]
+            r += Color.red(color)
+            g += Color.green(color)
+            b += Color.blue(color)
+            n++
+            i += skipPixel
+        }
+        return (r + b + g) / (n * 3)
+    }
+
+    private fun launchApp(packageName: String) {
+        val i = registrar.context().getPackageManager().getLaunchIntentForPackage(packageName)
+        if (i != null)
+            registrar.context().startActivity(i)
+    }
+
+    private fun getBitmapFromDrawable(drawable: Drawable): Bitmap {
+        val bmp = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bmp)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+        return bmp
+    }
+
+    private fun getAllApps(result: MethodChannel.Result) {
+
+        val intent = Intent(Intent.ACTION_MAIN, null)
+        intent.addCategory(Intent.CATEGORY_LAUNCHER)
+
+        val manager = registrar.context().getPackageManager()
+        val resList = manager.queryIntentActivities(intent, 0)
+
+        val _output = ArrayList<Map<String, Any>>()
+
+        for (resInfo in resList) {
+            try {
+                val app = manager.getApplicationInfo(
+                        resInfo.activityInfo.packageName, PackageManager.GET_META_DATA)
+                if (manager.getLaunchIntentForPackage(app.packageName) != null) {
+
+                    val iconData = convertToBytes(getBitmapFromDrawable(app.loadIcon(manager)),
+                            Bitmap.CompressFormat.PNG, 100)
+
+                    val current = HashMap<String, Any>()
+                    current["label"] = app.loadLabel(manager).toString()
+                    current["icon"] = iconData
+                    current["package"] = app.packageName
+                    _output.add(current)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        result.success(_output)
+    }
 }
