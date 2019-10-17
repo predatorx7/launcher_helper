@@ -90,7 +90,9 @@ class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
         } else if (call.method == "getWallpaper") {
             getWallpaper(result)
         } else if (call.method == "getWallpaperBrightness") {
-            getWallpaperBrightness(result, call.argument<Int>("skipPixel").toInt())
+            // call.argument<Int>("skipPixel").toInt()
+            var skipPixel = call.argument<Int>("skipPixel")!!.toInt()
+            getWallpaperBrightness(result, skipPixel)
         } else {
             result.notImplemented()
         }
