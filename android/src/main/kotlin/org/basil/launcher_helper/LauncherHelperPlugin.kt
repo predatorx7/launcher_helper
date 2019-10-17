@@ -1,63 +1,55 @@
-/// MIT License
-/// Copyright (c) 2019 Syed Mushaheed
-/// Permission is hereby granted, free of charge, to any person obtaining a copy of this
-/// software and associated documentation files (the "Software"), to deal in the
-/// Software without restriction, including without limitation the rights to use, copy,
-/// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
-/// and to permit persons to whom the Software is furnished to do so, subject to the
-/// following conditions:
-///
-/// The above copyright notice and this permission notice shall be included in all copies
-/// or substantial portions of the Software.
-///
-/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-/// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-/// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-/// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
-/// ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-/// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-/// OTHER DEALINGS IN THE SOFTWARE.
+// / MIT License
+// / Copyright (c) 2019 Syed Mushaheed
+// / Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// / software and associated documentation files (the "Software"), to deal in the
+// / Software without restriction, including without limitation the rights to use, copy,
+// / modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+// / and to permit persons to whom the Software is furnished to do so, subject to the
+// / following conditions:
+// /
+// / The above copyright notice and this permission notice shall be included in all copies
+// / or substantial portions of the Software.
+// /
+// / THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// / EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// / OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// / NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+// / ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// / OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// / OTHER DEALINGS IN THE SOFTWARE.
 
-/// Modifications Copyright 2019 Mushaheed Syed
-/// Copyright 2017 Ashraff Hathibelagal
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///     http://www.apache.org/licenses/LICENSE-2.0
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
+// / Modifications Copyright 2019 Mushaheed Syed
+// / Copyright 2017 Ashraff Hathibelagal
+// / Licensed under the Apache License, Version 2.0 (the "License");
+// / you may not use this file except in compliance with the License.
+// / You may obtain a copy of the License at
+// /     http://www.apache.org/licenses/LICENSE-2.0
+// / Unless required by applicable law or agreed to in writing, software
+// / distributed under the License is distributed on an "AS IS" BASIS,
+// / WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// / See the License for the specific language governing permissions and
+// / limitations under the License.
 
 package org.basil.launcher_helper
 
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry.Registrar
-import io.flutter.plugin.common.PluginRegistry
-
 import android.app.WallpaperManager
 import android.content.Intent
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.util.Log
-
-import org.json.JSONArray
-import org.json.JSONException
-
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler
+import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry
+import io.flutter.plugin.common.PluginRegistry.Registrar
 import java.io.ByteArrayOutputStream
 import java.util.ArrayList
 import java.util.HashMap
-
 
 class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
 
@@ -83,18 +75,26 @@ class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
     }
 
     override fun onMethodCall(call: MethodCall, result: Result) {
-        if (call.method == "getAllApps") {
-            getAllApps(result)
-        } else if (call.method == "launchApp") {
-            launchApp(call.argument<String>("packageName").toString())
-        } else if (call.method == "getWallpaper") {
-            getWallpaper(result)
-        } else if (call.method == "getWallpaperBrightness") {
-            // call.argument<Int>("skipPixel").toInt()
-            var skipPixel = call.argument<Int>("skipPixel")!!.toInt()
-            getWallpaperBrightness(result, skipPixel)
-        } else {
-            result.notImplemented()
+        // if (call.method == "getAllApps") {
+        //     getAllApps(result)
+        // } else if (call.method == "launchApp") {
+        //     launchApp(call.argument<String>("packageName").toString())
+        // } else if (call.method == "getWallpaper") {
+        //     getWallpaper(result)
+        // } else if (call.method == "getWallpaperBrightness") {
+        //     // call.argument<Int>("skipPixel").toInt()
+        //     var skipPixel = call.argument<Int>("skipPixel")!!.toInt()
+        //     getWallpaperBrightness(result, skipPixel)
+        // } else {
+        //     result.notImplemented()
+        // }
+        when (call.method) {
+            "getAllApps" -> getAllApps(result)
+            "launchApp" -> launchApp(call.argument<String>("packageName").toString())
+            "getWallpaper" -> getWallpaper(result)
+            "getWallpaperBrightness" -> getWallpaperBrightness(result, call.argument<Int>("skipPixel")!!.toInt())
+            "getBrightnessFrom" -> getBrightnessFrom(result, call.argument<ByteArray>("imageData")!!.toByteArray(), call.argument<Int>("skipPixel")!!.toInt())
+            else -> result.notImplemented()
         }
     }
 
@@ -122,14 +122,17 @@ class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
         }
     }
 
+    private fun getBrightnessFrom(result: MethodChannel.Result, image: ByteArray, skipPixel: Int) {
+        // Convert ByteArray to bitmap
+        var bitmap: Bitmap = BitmapFactory.decodeByteArray(image, 0, image.size)
+        val brightness = calculateBrightness(bitmap, skipPixel)
+        result.success(brightness)
+    }
+
     // Returns the brightness for an image
-    private fun calculateBrightness(image: Bitmap, skipPixel: Int): Int {
-        var r = 0
-        var g = 0
-        var b = 0
-        val height = image.height
-        val width = image.width
-        var n = 0
+    private fun calculateBrightness(image: Bitmap, skipPixels: Int): Int {
+        var r = 0; var g = 0; var b = 0; var n = 0
+        val height = image.height; val width = image.width
         val pixels = IntArray(width * height)
         image.getPixels(pixels, 0, width, 0, 0, width, height)
         var i = 0
@@ -139,7 +142,7 @@ class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
             g += Color.green(color)
             b += Color.blue(color)
             n++
-            i += skipPixel
+            i += skipPixels
         }
         return (r + b + g) / (n * 3)
     }
@@ -190,3 +193,4 @@ class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
         result.success(_output)
     }
 }
+

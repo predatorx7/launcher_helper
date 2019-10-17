@@ -37,7 +37,7 @@ asynchronous and they may fail.
 
 ________
 
-- To get all applications & their additional information, use `getAllApps` method from `LauncherHelper`. It returns a List of Maps of applications with their information.
+- To get all applications & their additional information, use `getApps` method from `LauncherHelper`. It returns a List of Maps of applications with their information.
 
 - Wallpaper is fetched as **Uint8List bytes** through `getWallpaper` method. Use these ImageData bytes in `Image.memory()` as argument to parameter `bytes` to display wallpaper.
 

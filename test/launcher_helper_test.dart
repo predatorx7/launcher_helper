@@ -7,7 +7,8 @@ void main() {
 
   setUp(() {
     channel.setMockMethodCallHandler((MethodCall methodCall) async {
-      return 170;
+      // return 170;
+      return [];
     });
   });
 
@@ -16,6 +17,7 @@ void main() {
   });
 
   test('getWallpaperBrightness', () async {
-    expect(await LauncherHelper.getWallpaperBrightness(skipPixel: 3), 170);
+    // expect(await LauncherHelper.getWallpaperBrightness(skipPixel: 3), 170);
+    expect(await LauncherHelper.getApps, []);
   });
 }

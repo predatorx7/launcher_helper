@@ -59,7 +59,7 @@ class _MyAppState extends State<MyApp> {var numberOfInstalledApps;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
       // Get all apps
-      apps = await LauncherHelper.getAllApps;
+      apps = await LauncherHelper.getApps;
       // Get wallpaper as binary data
       imageData = await LauncherHelper.getWallpaper;
       // Get Color palette (generated from wallpaper)

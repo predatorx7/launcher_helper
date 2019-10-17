@@ -8,13 +8,17 @@ import 'dart:typed_data';
 import 'package:flutter/widgets.dart';
 import 'palette_generator.dart';
 
+/// This [Applications] generates a List of [AppInfo] (which has application information) for better access.
+/// It needs a list with map of applications obtained from platform operations to create [AppInfo].
 class Applications {
-  final List<Map<String, dynamic>> _rawApplicationList;
+  /// List with Maps of installed application information
+  final List<Map<String, dynamic>> applicationList;
   List<AppInfo> _apps;
+  /// List with [AppInfo]s
   List<AppInfo> get apps => _apps;
 
-  Applications(this._rawApplicationList) {
-    for (var _appData in _rawApplicationList) {
+  Applications(this.applicationList) {
+    for (var _appData in applicationList) {
       _apps.add(
         AppInfo(
           label: _appData["label"],

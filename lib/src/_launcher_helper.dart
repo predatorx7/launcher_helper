@@ -1,10 +1,10 @@
-// Copyright 2019 Mushaheed Syed. All rights reserved.
-
-// Use of this source code is governed by a MIT license that can be
-// found in the LICENSE file.
+/// Copyright 2019 Mushaheed Syed. All rights reserved.
+///
+/// Use of this source code is governed by a MIT license that can be
+/// found in the LICENSE file.
 /// ---------------------------------------------------------------------------------------
-/// Modifications Copyright 2019 Mushaheed Syed
 /// Copyright 2017 Ashraff Hathibelagal
+/// 
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
 /// You may obtain a copy of the License at
@@ -27,14 +27,20 @@ class LauncherHelper {
   static const MethodChannel _channel = const MethodChannel('launcher_helper');
 
   /// Returns a list of apps installed on the user's device
-  static Future<List> get getAllApps async {
+  static Future<List> get getApps async {
     var data = await _channel.invokeMethod('getAllApps');
     return data;
   }
 
   /// Launches an app using its package name
-  static Future launchApp(String packageName) async {
-    await _channel.invokeMethod("launchApp", {"packageName": packageName});
+  static Future<bool> launchApp(String packageName) async {
+    try {
+      await _channel.invokeMethod("launchApp", {"packageName": packageName});
+      return true;
+    } catch (e) {
+      debugPrint('[LauncherHelper:launchApp] Failed because: $e');
+      return false;
+    }
   }
 
   /// Gets you the current wallpaper on the user's device. This method
@@ -51,7 +57,7 @@ class LauncherHelper {
   ///
   /// `skipPixel` parameter refers to number of pixels to skip while calculating Wallpaper's brightness.
   /// `skipPixel` defaults to 1 (every pixel is counted) and can't be less than 1.
-  /// 
+  ///
   /// __Note:__
   /// - This method needs the READ_EXTERNAL_STORAGE permission on Android Oreo & above.
   static Future<int> getWallpaperBrightness({int skipPixel = 1}) async {
@@ -60,6 +66,24 @@ class LauncherHelper {
         "[LauncherHelper] External Storage Access permission might be needed for Android Oreo & above.");
     int data = await _channel
         .invokeMethod('getWallpaperBrightness', {'skipPixel': skipPixel});
+    return data;
+  }
+
+  /// Gets you the brightness of any image (as `Uint8List`). The function returns
+  /// a brightness level between 0 and 255, where 0 = totally black and 255 = totally bright.
+  ///
+  /// `skipPixel` parameter refers to number of pixels to skip while calculating Wallpaper's brightness.
+  /// `skipPixel` defaults to 1 (every pixel is counted) and can't be less than 1.
+  ///
+  /// __Note:__
+  /// - This method needs the READ_EXTERNAL_STORAGE permission on Android Oreo & above.
+  static getBrightnessFrom(Uint8List imageData, {int skipPixel = 1}) async {
+    assert(skipPixel > 0, 'skipPixel should have a value greater than 0');
+    assert(imageData != null, 'imageData should not be null');
+    debugPrint(
+        "[LauncherHelper] External Storage Access permission might be needed for Android Oreo & above.");
+    int data = await _channel.invokeMethod(
+        'getBrightnessFrom', {'skipPixel': skipPixel, "imageData": imageData});
     return data;
   }
 
