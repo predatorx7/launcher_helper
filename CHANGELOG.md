@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0
+
+- Added palette generator, not need to add `palette_generator` as a dependency in projects.
+- Can generate Color palette to use in user interface and theming from wallpapers.
+- Can generate color palettes from an application icon.
+- Provided [Applications] to better use information from appinfo.
+- Can determine brightness of wallpaper (or any other image) using dominant colors and also has options to show brightness percentage
+
 ## 0.1.1
 
 - Fetching Wallpaper now works with External Storage access permission

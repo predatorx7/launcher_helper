@@ -99,7 +99,6 @@ class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
     }
 
     private fun getWallpaper(result: MethodChannel.Result) {
-        print("[LauncherHelper] External Storage Access permission might be needed to get wallpapers.")
         if (wallpaperData != null) {
             result.success(wallpaperData)
             return

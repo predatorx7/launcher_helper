@@ -35,7 +35,6 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:launcher_helper/launcher_helper.dart';
-import 'package:palette_generator/palette_generator.dart';
 
 void main() => runApp(MyApp());
 
