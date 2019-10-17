@@ -41,4 +41,10 @@ ________
 
 - Wallpaper is fetched as **Uint8List bytes** through `getWallpaper` method. Use these ImageData bytes in `Image.memory()` as argument to parameter `bytes` to display wallpaper.
 
+- `permission_handler 3.2.2` is used in the example to get external storage access permission.
+
 - Applications can be launched with `launchApp(<Package-name>)` method of `Launcherhelper`; It requires package name of app as String to launch them.
+
+**Note**:
+
+- Don't forget to get external storage access permission before using `getWallpaper`.

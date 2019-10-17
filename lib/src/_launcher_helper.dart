@@ -4,7 +4,7 @@
 /// found in the LICENSE file.
 /// ---------------------------------------------------------------------------------------
 /// Copyright 2017 Ashraff Hathibelagal
-/// 
+///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
 /// You may obtain a copy of the License at
@@ -21,15 +21,23 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'apps_info.dart';
 import 'palette_generator.dart';
 
 class LauncherHelper {
   static const MethodChannel _channel = const MethodChannel('launcher_helper');
 
   /// Returns a list of apps installed on the user's device
+  @deprecated
   static Future<List> get getApps async {
     var data = await _channel.invokeMethod('getAllApps');
     return data;
+  }
+
+  /// Returns an [Applications] object with [AppInfo] of apps installed on the user's device.
+  static Future<Applications> get getApplications async {
+    List<Map> data = await _channel.invokeMethod('getAllApps');
+    return Applications(data);
   }
 
   /// Launches an app using its package name
@@ -69,7 +77,39 @@ class LauncherHelper {
     return data;
   }
 
-  /// Gets you the brightness of any image (as `Uint8List`). The function returns
+  /// This asynchronously calculates brightness/luminance for an image.
+  ///
+  /// The function returns a list as `[isDark, brightness, luminance]` for image data of `Uint8List` type.
+  /// `brightness` in the list represents brightness with level between 0 and 255, where 0 = totally black and 255 = totally bright,
+  /// `isDark` as `true` if Picture is dark else `false`,
+  /// and `luminance` with a brightness value between 0 for darkest and 1 for lightest.
+  /// It represents the relative luminance of the color.
+  ///
+  /// The List of values this function returns is computationally very expensive to calculate.
+  /// Calculate luminance of dominant color(s) from [PaletteGenerator] (use `computeLuminance()` of [Color]).
+  static Future<List> getImageLuminance(
+      {Uint8List imageData, int skipPixels = 1}) async {
+    int _r, _g, _b;
+    double brightness;
+    double luminance;
+    PaletteGenerator palette = await PaletteGenerator.fromUint8List(imageData);
+    var index = 0, n = 0;
+    double totLum = 0;
+    while (index < palette.colors.length) {
+      var color = palette.colors.toList()[index];
+      _r += color.red;
+      _g += color.green;
+      _b += color.blue;
+      totLum += color.computeLuminance();
+      n += 1;
+      index += skipPixels;
+    }
+    brightness = ((_r + _b + _g) / (n * 3));
+    luminance = totLum / n;
+    return [(luminance < 0.5), brightness, luminance];
+  }
+
+  /// Gets you the brightness of any image (image as `Uint8List`). The function returns
   /// a brightness level between 0 and 255, where 0 = totally black and 255 = totally bright.
   ///
   /// `skipPixel` parameter refers to number of pixels to skip while calculating Wallpaper's brightness.
@@ -80,8 +120,6 @@ class LauncherHelper {
   static getBrightnessFrom(Uint8List imageData, {int skipPixel = 1}) async {
     assert(skipPixel > 0, 'skipPixel should have a value greater than 0');
     assert(imageData != null, 'imageData should not be null');
-    debugPrint(
-        "[LauncherHelper] External Storage Access permission might be needed for Android Oreo & above.");
     int data = await _channel.invokeMethod(
         'getBrightnessFrom', {'skipPixel': skipPixel, "imageData": imageData});
     return data;
@@ -94,10 +132,12 @@ class LauncherHelper {
   static Future get palette async {
     PaletteGenerator _palette;
     Uint8List imageData = await getWallpaper;
-    _palette = await _getPalette(imageData);
+    _palette = await PaletteGenerator.fromUint8List(imageData);
     return _palette;
   }
 
+  /// This method is also available in PaletteGenerator. Will be removed in next update.
+  @deprecated
   static Future<PaletteGenerator> _getPalette(Uint8List imageData) async {
     print('Image data(UIntList): $imageData');
     ui.Codec imageCodec = await ui.instantiateImageCodec(imageData);

@@ -35,18 +35,69 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:launcher_helper/launcher_helper.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-void main() => runApp(MyApp());
-
-class MyApp extends StatefulWidget {
-  @override
-  _MyAppState createState() => _MyAppState();
+class HandlerOfPermissions {
+  Future<bool> requestPerm() async {
+    await PermissionHandler().requestPermissions([PermissionGroup.storage]);
+    PermissionStatus permission = await PermissionHandler()
+        .checkPermissionStatus(PermissionGroup.storage);
+    if (permission != PermissionStatus.granted) {
+      print('[HandlerOfPermissions] permission not granted.');
+      return false;
+    } else {
+      return true;
+    }
+  }
 }
 
-class _MyAppState extends State<MyApp> {var numberOfInstalledApps;
+void main() async {
+  await HandlerOfPermissions().requestPerm();
+  runApp(Root());
+}
+
+class Root extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Red',
+      themeMode: ThemeMode.system,
+      // theme: lightTheme,
+      theme: ThemeData(primaryColor: Colors.blue),
+      // darkTheme: darkTheme,
+      home: XPage(),
+    );
+  }
+}
+
+class XPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: RaisedButton(
+          onPressed: () {
+            Navigator.of(context)
+                .push(MaterialPageRoute(builder: (context) => HomePage()));
+          },
+          child: Text('Next Page'),
+        ),
+      ),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  var numberOfInstalledApps;
   var installedApps;
   var wallpaper;
   PaletteGenerator palette;
+  int brightness;
 
   @override
   void initState() {
@@ -56,6 +107,7 @@ class _MyAppState extends State<MyApp> {var numberOfInstalledApps;
 
   Future<void> initPlatformState() async {
     var apps, imageData, _palette;
+    int _brightness;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
       // Get all apps
@@ -64,6 +116,8 @@ class _MyAppState extends State<MyApp> {var numberOfInstalledApps;
       imageData = await LauncherHelper.getWallpaper;
       // Get Color palette (generated from wallpaper)
       _palette = await LauncherHelper.palette;
+      // Wallpaper brightness
+      _brightness = await LauncherHelper.getWallpaperBrightness(skipPixel: 50);
     } on PlatformException {
       print('Failed to get apps or wallpaper');
     }
@@ -76,6 +130,7 @@ class _MyAppState extends State<MyApp> {var numberOfInstalledApps;
       installedApps = apps;
       wallpaper = imageData;
       palette = _palette;
+      brightness = _brightness;
     });
   }
 
@@ -100,10 +155,56 @@ class _MyAppState extends State<MyApp> {var numberOfInstalledApps;
             width: 50,
             color: palette.colors.toList()[0],
           ),
-          SingleChildScrollView(
-            child: Text(installedApps.toString()),
+          Text('$brightness'),
+          SizedBox(
+            height: 5,
+          ),
+          RaisedButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => AppListPage(
+                    appList: installedApps,
+                  ),
+                ),
+              );
+            },
+            child: Text('Next Page'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class AppListPage extends StatelessWidget {
+  final List appList;
+  AppListPage({this.appList});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Installed Apps'),
+      ),
+      body: ListView.builder(
+        itemCount: appList.length,
+        itemBuilder: (BuildContext context, int index) {
+          return ListTile(
+            leading: Container(
+              height: 50,
+              width: 50,
+              child: Image.memory(
+                appList[index]["icon"],
+              ),
+            ),
+            title: Text(
+              appList[index]["label"],
+            ),
+            subtitle: Text(
+              appList[index]["package"],
+            ),
+          );
+        },
       ),
     );
   }

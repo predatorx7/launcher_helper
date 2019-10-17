@@ -93,7 +93,7 @@ class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
             "launchApp" -> launchApp(call.argument<String>("packageName").toString())
             "getWallpaper" -> getWallpaper(result)
             "getWallpaperBrightness" -> getWallpaperBrightness(result, call.argument<Int>("skipPixel")!!.toInt())
-            "getBrightnessFrom" -> getBrightnessFrom(result, call.argument<ByteArray>("imageData")!!.toByteArray(), call.argument<Int>("skipPixel")!!.toInt())
+            "getBrightnessFrom" -> getBrightnessFrom(result, call.argument<ByteArray?>("imageData"), call.argument<Int>("skipPixel")!!.toInt())
             else -> result.notImplemented()
         }
     }
@@ -122,9 +122,9 @@ class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
         }
     }
 
-    private fun getBrightnessFrom(result: MethodChannel.Result, image: ByteArray, skipPixel: Int) {
+    private fun getBrightnessFrom(result: MethodChannel.Result, image: ByteArray?, skipPixel: Int) {
         // Convert ByteArray to bitmap
-        var bitmap: Bitmap = BitmapFactory.decodeByteArray(image, 0, image.size)
+        var bitmap: Bitmap = BitmapFactory.decodeByteArray(image, 0, image!!.size)
         val brightness = calculateBrightness(bitmap, skipPixel)
         result.success(brightness)
     }

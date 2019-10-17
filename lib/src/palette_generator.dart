@@ -1,5 +1,5 @@
 /// Copyright 2019 Mushaheed Syed. All rights reserved.
-/// 
+///
 /// Use of this source code is governed by a MIT license that can be
 /// found in the LICENSE file.
 /// ----------------------------------------------------------------------
@@ -157,7 +157,7 @@ class PaletteGenerator extends Diagnosticable {
   }
 
   /// Creates a [PaletteGenerator] from [Uint8List] image data asynchronously.
-  /// 
+  ///
   /// The [region] specifies the part of the image to inspect for color
   /// candidates. By default it uses the entire image. Must not be equal to
   /// [Rect.zero], and must not be larger than the image dimensions.
@@ -175,6 +175,10 @@ class PaletteGenerator extends Diagnosticable {
   /// [PaletteTarget.baseTargets].
   ///
   /// The [imageData] must not be null.
+  ///
+  /// **Note**:
+  /// - You can use `computeLuminance()` method of [dominantColor] of type `Color` obtained from
+  /// generated Palette.
   static Future<PaletteGenerator> fromUint8List(
     Uint8List imageData, {
     Rect region,
