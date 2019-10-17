@@ -67,12 +67,12 @@ class LauncherHelper {
   /// a brightness level between 0 and 255, where 0 = totally black and 255 = totally bright.
   ///
   /// This method needs the READ_EXTERNAL_STORAGE permission on Android Oreo & above.
-  static Future getWallpaperBrightness({int skipPixel = 1}) async {
+  static Future<int> getWallpaperBrightness({int skipPixel = 1}) async {
     assert(skipPixel > 0, 'skipPixel should have a value greater than 0');
     debugPrint(
         "[LauncherHelper] External Storage Access permission might be needed for Android Oreo & above.");
     int data = await _channel
-        .invokeMethod('getWallpaperBrightness', {'skipPixel', skipPixel});
+        .invokeMethod('getWallpaperBrightness', {'skipPixel': skipPixel});
     return data;
   }
 
