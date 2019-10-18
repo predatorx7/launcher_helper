@@ -17,8 +17,8 @@
 /// ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 /// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
-/// ---------------------------------------------------------------------------------------
-/// Modifications Copyright 2019 Mushaheed Syed
+/// 
+/// --------------------------------------------------------------------------------
 /// Copyright 2017 Ashraff Hathibelagal
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.

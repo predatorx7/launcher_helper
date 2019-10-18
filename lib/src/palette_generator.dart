@@ -2,7 +2,8 @@
 ///
 /// Use of this source code is governed by a MIT license that can be
 /// found in the LICENSE file.
-/// ----------------------------------------------------------------------
+/// 
+/// --------------------------------------------------------------------------------
 /// Copyright 2014 The Chromium Authors. All rights reserved.
 
 /// Redistribution and use in source and binary forms, with or without
