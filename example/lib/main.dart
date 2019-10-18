@@ -44,7 +44,13 @@ class HandlerOfPermissions {
         .checkPermissionStatus(PermissionGroup.storage);
     if (permission != PermissionStatus.granted) {
       print('[HandlerOfPermissions] permission not granted.');
-      return false;
+      await PermissionHandler().openAppSettings();
+      if (permission != PermissionStatus.granted) {
+        print('[HandlerOfPermissions] permission not granted.');
+        return false;
+      } else {
+        return true;
+      }
     } else {
       return true;
     }
@@ -52,6 +58,7 @@ class HandlerOfPermissions {
 }
 
 void main() async {
+  // Obtaining permissions
   await HandlerOfPermissions().requestPerm();
   runApp(Root());
 }
@@ -60,30 +67,12 @@ class Root extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Red',
-      themeMode: ThemeMode.system,
-      // theme: lightTheme,
-      theme: ThemeData(primaryColor: Colors.blue),
-      // darkTheme: darkTheme,
-      home: XPage(),
-    );
-  }
-}
-
-class XPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: RaisedButton(
-          onPressed: () {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (context) => HomePage()));
-          },
-          child: Text('Next Page'),
-        ),
-      ),
-    );
+        title: 'Red',
+        themeMode: ThemeMode.system,
+        // theme: lightTheme,
+        theme: ThemeData(primaryColor: Colors.blue),
+        // darkTheme: darkTheme,
+        home: HomePage());
   }
 }
 
@@ -93,8 +82,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  var numberOfInstalledApps;
-  var installedApps;
+  int numberOfInstalledApps;
+  Applications installedApps;
   var wallpaper;
   PaletteGenerator palette;
   int brightness;
@@ -106,17 +95,19 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> initPlatformState() async {
-    var apps, imageData, _palette;
+    Applications apps;
+    var imageData, _palette;
     int _brightness;
+
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
       // Get all apps
-      apps = await LauncherHelper.getApps;
+      apps = await LauncherHelper.getApplications;
       // Get wallpaper as binary data
       imageData = await LauncherHelper.getWallpaper;
-      // Get Color palette (generated from wallpaper)
-      _palette = await LauncherHelper.palette;
-      // Wallpaper brightness
+      // Generate palette
+      _palette = await LauncherHelper.wallpaperPalette;
+      // Get brightness
       _brightness = await LauncherHelper.getWallpaperBrightness(skipPixel: 50);
     } on PlatformException {
       print('Failed to get apps or wallpaper');
@@ -136,49 +127,69 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    var colors = palette?.colors;
     return Scaffold(
-      body: Column(
-        children: <Widget>[
-          new Text("Found $numberOfInstalledApps apps installed"),
-          new RaisedButton(
-            child: new Text("Launch Something"),
-            onPressed: () {
-              // Launch the first app available
-              LauncherHelper.launchApp(installedApps[0]["package"]);
-            },
+      body: SingleChildScrollView(
+        child: Container(
+          padding: EdgeInsets.only(left: 10, right: 10),
+          child: Column(
+            children: <Widget>[
+              new Text("Found $numberOfInstalledApps apps installed"),
+              (wallpaper != null)
+                  ? new FutureBuilder(
+                      future: // Get luminance
+                          LauncherHelper.getLuminance(imageData: wallpaper),
+                      builder:
+                          (BuildContext context, AsyncSnapshot<double> aSnap) {
+                        if (aSnap.hasData) {
+                          return Container(
+                            child: Column(
+                              children: <Widget>[
+                                Text('Is wallpaper dark? ${aSnap.data > 0.5}'),
+                                Text('Luminance: ${aSnap.data}'),
+                              ],
+                            ),
+                          );
+                        } else
+                          return Container();
+                      },
+                    )
+                  : Container(),
+              wallpaper != null
+                  ? new Image.memory(wallpaper, fit: BoxFit.scaleDown)
+                  : new Center(),
+              Container(
+                height: 50,
+                width: 50,
+                color: colors != null ? colors?.toList()[0] ?? null : null,
+              ),
+              Text(
+                  'Wallpaper brightness calculated from every pixel: $brightness'),
+              SizedBox(
+                height: 5,
+              ),
+              OutlineButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => AppListPage(
+                        appList: installedApps,
+                      ),
+                    ),
+                  );
+                },
+                child: Text('Next Page'),
+              ),
+            ],
           ),
-          wallpaper != null
-              ? new Image.memory(wallpaper, fit: BoxFit.scaleDown)
-              : new Center(),
-          Container(
-            height: 50,
-            width: 50,
-            color: palette.colors.toList()[0],
-          ),
-          Text('$brightness'),
-          SizedBox(
-            height: 5,
-          ),
-          RaisedButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => AppListPage(
-                    appList: installedApps,
-                  ),
-                ),
-              );
-            },
-            child: Text('Next Page'),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
 class AppListPage extends StatelessWidget {
-  final List appList;
+  final Applications appList;
   AppListPage({this.appList});
   @override
   Widget build(BuildContext context) {
@@ -189,19 +200,23 @@ class AppListPage extends StatelessWidget {
       body: ListView.builder(
         itemCount: appList.length,
         itemBuilder: (BuildContext context, int index) {
+          var app = appList.toList()[index];
           return ListTile(
+            onTap: () {
+              LauncherHelper.launchApp(app.packageName);
+            },
             leading: Container(
               height: 50,
               width: 50,
               child: Image.memory(
-                appList[index]["icon"],
+                app.iconData,
               ),
             ),
             title: Text(
-              appList[index]["label"],
+              app.label,
             ),
             subtitle: Text(
-              appList[index]["package"],
+              app.packageName,
             ),
           );
         },

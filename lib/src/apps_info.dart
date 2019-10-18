@@ -11,26 +11,32 @@ import 'palette_generator.dart';
 /// This [Applications] generates a List of [AppInfo] (which has application information) for better access.
 /// It needs a list with map of applications obtained from platform operations to create [AppInfo].
 class Applications {
-  /// List with Maps of installed application information
-  final List<Map<String, dynamic>> applicationList;
+  /// List with [AppInfo]s containing information for apps
   List<AppInfo> _apps;
-  /// List with [AppInfo]s
-  List<AppInfo> get apps => _apps;
 
-  Applications(this.applicationList) {
-    for (var _appData in applicationList) {
-      _apps.add(
-        AppInfo(
-          label: _appData["label"],
-          packageName: _appData["package"],
-          iconData: _appData["icon"],
-        ),
+  Applications(List appList) {
+    this._apps = [];
+    for (var appData in appList) {
+      AppInfo appInfo = AppInfo(
+        label: appData["label"],
+        packageName: appData["package"],
+        iconData: appData["icon"],
       );
+      this._apps.add(appInfo);
     }
   }
+
+  int get length => _apps.length;
+
+  /// Creates a [List] containing the [AppInfo] elements of this [Applications] instance.
+  ///
+  /// The elements are in iteration order.
+  /// The list is fixed-length if [growable] is false.
+  List<AppInfo> toList({growable = false}) =>
+      List<AppInfo>.from(this._apps, growable: growable);
 }
 
-/// [Appinfo] containing Application information obtained from [Applications]'s list.
+/// [AppInfo] containing Application information obtained from [Applications]'s list.
 ///
 /// This represents a package label as [label], package name as [packageName] and
 /// icon [iconData] as a [Uint8List].
@@ -41,7 +47,10 @@ class AppInfo {
   String label;
   String packageName;
   Uint8List iconData;
-  AppInfo({this.label, this.packageName, this.iconData});
+  AppInfo({String label, String packageName, Uint8List iconData})
+      : this.label = label,
+        this.packageName = packageName,
+        this.iconData = iconData;
 
   /// Creates a flutter Image widget from obtained iconData [Uint8List]
   Image getIconAsImage() {

@@ -11,29 +11,7 @@ You can import this package as: `import 'package:launcher_helper/launcher_helper
 Use methods from `LauncherHelper` with try/catch in an asynchronous method as Platform messages are
 asynchronous and they may fail.
 
-```dart
-  Future<void> initPlatformState() async {
-    var apps, imageData;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    try {
-      // Get all apps
-      apps = await LauncherHelper.getAllApps;
-      // Get wallpaper as binary data
-      imageData = await LauncherHelper.getWallpaper;
-    } on PlatformException {
-      print('Failed to get apps or wallpaper');
-    }
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-    setState(() {
-      numberOfInstalledApps = apps.length;
-      installedApps = apps;
-      wallpaper = imageData;
-    });
-  }
-```
+Check example code.
 
 ________
 

@@ -10,7 +10,8 @@ This package helps to reduce work when creating a launcher. In the current build
 - Add `launcher_helper` as a dependency in pubspec.yaml.
 - Import package as: `import 'package:launcher_helper/launcher_helper.dart';`
 - Use `LauncherHelper` class to use package methods
+- Check Example's README.md for more information.
 
 ## Note
 
-- To be usable, __launcher_helper 0.1.1__ is dependant upon palette_generator in your project. Add `palette_generator: 0.2.0` as a dependency in your pubspec.yaml. This can be safely ignored in __launcher_helper 0.2.0__ and above
+- From __0.2.0__, `launcher_helper` is no longer dependant upon `palette_generator`. But, if you are using __launcher_helper 0.1.1__ then you have to include `palette_generator` in your project

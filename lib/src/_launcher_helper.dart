@@ -24,6 +24,19 @@ import 'package:flutter/foundation.dart';
 import 'apps_info.dart';
 import 'palette_generator.dart';
 
+/// # LauncherHelper
+///
+/// A class to help reduce work when creating a launcher.
+///
+/// ## Available methods/getters:
+///
+/// - Use [getApplications] to get list of apps installed.
+/// - [launchApp] can launch apps by providing their package name.
+/// - [getWallpaper] returns device wallpaper as [Uint8List].
+/// - [getWallpaperBrightness] returns brightness of wallpaper.
+/// - [getLuminance] calculates approximate luminance/brightness of an image.
+/// - [getBrightnessFrom] calculates brightness of an image from every pixel.
+/// - [wallpaperPalette] generated color palettes of wallpaper using [PaletteGenerator].
 class LauncherHelper {
   static const MethodChannel _channel = const MethodChannel('launcher_helper');
 
@@ -36,7 +49,7 @@ class LauncherHelper {
 
   /// Returns an [Applications] object with [AppInfo] of apps installed on the user's device.
   static Future<Applications> get getApplications async {
-    List<Map> data = await _channel.invokeMethod('getAllApps');
+    List data = await _channel.invokeMethod('getAllApps');
     return Applications(data);
   }
 
@@ -51,7 +64,7 @@ class LauncherHelper {
     }
   }
 
-  /// Gets you the current wallpaper on the user's device. This method
+  /// This gets the current wallpaper on the user's device. This method
   /// needs the READ_EXTERNAL_STORAGE permission on Android Oreo & above.
   static Future<Uint8List> get getWallpaper async {
     debugPrint(
@@ -60,7 +73,7 @@ class LauncherHelper {
     return data;
   }
 
-  /// Gets you the brightness of current Wallpaper to determine theme (light or dark). The function returns
+  /// This gets the brightness of current Wallpaper to determine theme (light or dark). The function returns
   /// a brightness level between 0 and 255, where 0 = totally black and 255 = totally bright.
   ///
   /// `skipPixel` parameter refers to number of pixels to skip while calculating Wallpaper's brightness.
@@ -77,39 +90,37 @@ class LauncherHelper {
     return data;
   }
 
-  /// This asynchronously calculates brightness/luminance for an image.
+  /// This asynchronously calculates luminance for an image.
   ///
-  /// The function returns a list as `[isDark, brightness, luminance]` for image data of `Uint8List` type.
-  /// `brightness` in the list represents brightness with level between 0 and 255, where 0 = totally black and 255 = totally bright,
-  /// `isDark` as `true` if Picture is dark else `false`,
-  /// and `luminance` with a brightness value between 0 for darkest and 1 for lightest.
+  /// The function returns a [double] representing `luminance` from image data of `Uint8List` type.
+  /// `luminance` with a brightness value between 0 for darkest and 1 for lightest.
   /// It represents the relative luminance of the color.
   ///
-  /// The List of values this function returns is computationally very expensive to calculate.
-  /// Calculate luminance of dominant color(s) from [PaletteGenerator] (use `computeLuminance()` of [Color]).
-  static Future<List> getImageLuminance(
-      {Uint8List imageData, int skipPixels = 1}) async {
-    int _r, _g, _b;
-    double brightness;
+  /// The function uses list of `Color` generated from [PaletteGenerator] for calculations.
+  ///
+  /// **Note:**
+  /// - The values this function returns is computationally very expensive to calculate.
+  /// Consider using higher values for [skip] (which should not be more than the number of dominant colors in image) or
+  /// calculating luminance of the most dominant color generated from [PaletteGenerator] for an
+  /// image (use `computeLuminance()` of `Color`).
+  /// - For better accuracy of brightness/luminance, use [getBrightnessFrom] or[getWallpaperBrightness].
+  static Future<double> getLuminance(
+      {Uint8List imageData, int skip = 1}) async {
+    int index = 0, n = 0;
     double luminance;
     PaletteGenerator palette = await PaletteGenerator.fromUint8List(imageData);
-    var index = 0, n = 0;
-    double totLum = 0;
+    double totalLum = 0;
     while (index < palette.colors.length) {
-      var color = palette.colors.toList()[index];
-      _r += color.red;
-      _g += color.green;
-      _b += color.blue;
-      totLum += color.computeLuminance();
+      totalLum += palette.colors.toList()[index].computeLuminance();
       n += 1;
-      index += skipPixels;
+      index += skip;
     }
-    brightness = ((_r + _b + _g) / (n * 3));
-    luminance = totLum / n;
-    return [(luminance < 0.5), brightness, luminance];
+    print('[getLuminance] Colors counted for calculations: $n');
+    luminance = totalLum / n;
+    return luminance;
   }
 
-  /// Gets you the brightness of any image (image as `Uint8List`). The function returns
+  /// This gets the brightness of any image (image as `Uint8List`). The function returns
   /// a brightness level between 0 and 255, where 0 = totally black and 255 = totally bright.
   ///
   /// `skipPixel` parameter refers to number of pixels to skip while calculating Wallpaper's brightness.
@@ -125,11 +136,11 @@ class LauncherHelper {
     return data;
   }
 
-  /// Generates a palette based current Wallpaper to for use in UI colors.
+  /// It generates a palette based current Wallpaper to for use in UI colors.
   ///
   /// __Note:__
   /// - This method needs the READ_EXTERNAL_STORAGE permission on Android Oreo & above.
-  static Future get palette async {
+  static Future get wallpaperPalette async {
     PaletteGenerator _palette;
     Uint8List imageData = await getWallpaper;
     _palette = await PaletteGenerator.fromUint8List(imageData);

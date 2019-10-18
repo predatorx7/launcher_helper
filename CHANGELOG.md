@@ -2,11 +2,12 @@
 
 ## 0.2.0
 
-- Added palette generator, not need to add `palette_generator` as a dependency in projects.
+- Added palette generator, no need to add `palette_generator` as a dependency in projects.
 - Can generate Color palette to use in user interface and theming from wallpapers.
-- Can generate color palettes from an application icon.
+- Can generate color palettes from an application icon or image.
 - Provided [Applications] to better use information from appinfo.
-- Can determine brightness of wallpaper (or any other image) using dominant colors.
+- Calculate luminance/brightness of wallpaper or an image. Also has methods to
+determine brightness of wallpaper (or any other image) using dominant colors.
 
 ## 0.1.1
 

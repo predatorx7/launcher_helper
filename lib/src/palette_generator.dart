@@ -436,7 +436,7 @@ class PaletteGenerator extends Diagnosticable {
 /// generated.
 ///
 /// To add a target, supply it to the `targets` list in
-/// [PaletteGenerator.fromImage] or [PaletteGenerator..fromColors].
+/// [PaletteGenerator.fromImage] or [PaletteGenerator.fromColors].
 ///
 /// See also:
 ///
