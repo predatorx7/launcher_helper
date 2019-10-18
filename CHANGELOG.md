@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0+1
+
+- Improved package health
+- Documentation fixes
+
 ## 0.2.0
 
 - Added palette generator, no need to add `palette_generator` as a dependency in projects.

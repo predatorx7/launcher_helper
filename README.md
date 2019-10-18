@@ -3,7 +3,9 @@
 [![pub package](https://img.shields.io/pub/v/launcher_helper.svg)](
 https://pub.dartlang.org/packages/launcher_helper)
 
-This package helps to reduce work when creating a launcher. In the current build, it can get list of installed applications, launching them and getting phone's wallpaper. Only Android is supported.
+This package assists when creating a launcher. Some of it features include: Getting list of installed applications, launching them and getting phone's wallpaper, etc.
+
+Only Android is supported.
 
 ## Usage
 

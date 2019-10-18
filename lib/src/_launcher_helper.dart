@@ -19,7 +19,6 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'apps_info.dart';
@@ -146,16 +145,5 @@ class LauncherHelper {
     Uint8List imageData = await getWallpaper;
     _palette = await PaletteGenerator.fromUint8List(imageData);
     return _palette;
-  }
-
-  /// This method is also available in PaletteGenerator. Will be removed in next update.
-  @deprecated
-  static Future<PaletteGenerator> _getPalette(Uint8List imageData) async {
-    print('Image data(UIntList): $imageData');
-    ui.Codec imageCodec = await ui.instantiateImageCodec(imageData);
-    ui.FrameInfo imageFrame = await imageCodec.getNextFrame();
-    ui.Image image = imageFrame.image;
-    PaletteGenerator palette = await PaletteGenerator.fromImage(image);
-    return palette;
   }
 }
