@@ -32,8 +32,10 @@
 
 package org.basil.launcher_helper
 
+import android.app.Activity
 import android.app.WallpaperManager
 import android.content.Intent
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -51,7 +53,7 @@ import java.io.ByteArrayOutputStream
 import java.util.ArrayList
 import java.util.HashMap
 
-class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
+class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity) : MethodCallHandler {
 
     private var wallpaperData: ByteArray? = null
     private val registrar: PluginRegistry.Registrar
@@ -64,7 +66,7 @@ class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
         @JvmStatic
         fun registerWith(registrar: Registrar) {
             val channel = MethodChannel(registrar.messenger(), "launcher_helper")
-            channel.setMethodCallHandler(LauncherHelperPlugin(registrar))
+            channel.setMethodCallHandler(LauncherHelperPlugin(registrar, registrar.activity()))
         }
 
         fun convertToBytes(image: Bitmap, compressFormat: Bitmap.CompressFormat, quality: Int): ByteArray {
@@ -75,22 +77,13 @@ class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
     }
 
     override fun onMethodCall(call: MethodCall, result: Result) {
-        // if (call.method == "getAllApps") {
-        //     getAllApps(result)
-        // } else if (call.method == "launchApp") {
-        //     launchApp(call.argument<String>("packageName").toString())
-        // } else if (call.method == "getWallpaper") {
-        //     getWallpaper(result)
-        // } else if (call.method == "getWallpaperBrightness") {
-        //     // call.argument<Int>("skipPixel").toInt()
-        //     var skipPixel = call.argument<Int>("skipPixel")!!.toInt()
-        //     getWallpaperBrightness(result, skipPixel)
-        // } else {
-        //     result.notImplemented()
-        // }
         when (call.method) {
             "getAllApps" -> getAllApps(result)
+            "doesAppExist" -> doesAppExist(call.argument<String>("packageName").toString(), result)
             "launchApp" -> launchApp(call.argument<String>("packageName").toString())
+            "isAppEnabled" -> {
+                isAppEnabled(call.argument<String>("packageName").toString(), result)
+            }
             "getWallpaper" -> getWallpaper(result)
             "getWallpaperBrightness" -> getWallpaperBrightness(result, call.argument<Int>("skipPixel")!!.toInt())
             "getBrightnessFrom" -> getBrightnessFrom(result, call.argument<ByteArray?>("imageData"), call.argument<Int>("skipPixel")!!.toInt())
@@ -131,8 +124,12 @@ class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
 
     // Returns the brightness for an image
     private fun calculateBrightness(image: Bitmap, skipPixels: Int): Int {
-        var r = 0; var g = 0; var b = 0; var n = 0
-        val height = image.height; val width = image.width
+        var r = 0
+        var g = 0
+        var b = 0
+        var n = 0
+        val height = image.height
+        val width = image.width
         val pixels = IntArray(width * height)
         image.getPixels(pixels, 0, width, 0, 0, width, height)
         var i = 0
@@ -147,7 +144,41 @@ class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
         return (r + b + g) / (n * 3)
     }
 
-    private fun launchApp(packageName: String) {
+    //
+    private fun isAppEnabled(packageName: String, result: MethodChannel.Result) {
+        var isEnabled = false
+        try {
+            val appInfo = registrar.context().getPackageManager().getApplicationInfo(packageName, 0)
+            if (appInfo != null) {
+                isEnabled = appInfo!!.enabled
+            }
+        } catch (error: PackageManager.NameNotFoundException) {
+            result.error("No_Such_App_Found", error.message + " " + packageName, error)
+            return
+        }
+        result.success(isEnabled)
+    }
+
+    // Platform method to obtain icon of package for Flutter
+    private fun getIconOfPackage(packageName: String, result: MethodChannel.Result) {
+        val manager = registrar.context().getPackageManager()
+        val _output = ArrayList<Map<String, Any>>()
+        try {
+            val map = HashMap<String, Any>()
+            val icon = manager.getApplicationIcon(packageName)
+            val iconData = convertToBytes(getBitmapFromDrawable(icon),
+                    Bitmap.CompressFormat.PNG, 100)
+            map["iconData"] = iconData
+            _output.add(map)
+            result.success(iconData)
+        } catch (e: PackageManager.NameNotFoundException) {
+            e.printStackTrace()
+            result.error("No_Such_App_Found", e.message + " " + packageName, e)
+        }
+        result.success(_output)
+    }
+
+    private fun launchApp(packageName: String, result: MethodChannel.Result) {
         val i = registrar.context().getPackageManager().getLaunchIntentForPackage(packageName)
         if (i != null)
             registrar.context().startActivity(i)
@@ -159,6 +190,28 @@ class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
         drawable.setBounds(0, 0, canvas.width, canvas.height)
         drawable.draw(canvas)
         return bmp
+    }
+
+    // Checks if application exists/available. Function gives app information if app exists.
+    // Returns error with code "No_Such_App_Found" when application with provided package does not exist
+    private fun doesAppExist(packageName: String, result: MethodChannel.Result) {
+        val pkManager = activity.applicationContext.packageManager
+        var pkInfo: PackageInfo?
+        try {
+            pkInfo = pkManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
+        } catch (e: PackageManager.NameNotFoundException) {
+            pkInfo = null
+        }
+        if (pkInfo != null) {
+            val map = HashMap<String, Any>()
+            map["label"] = pkInfo.applicationInfo.loadLabel(registrar.context().getPackageManager()).toString()
+            map["packageName"] = pkInfo.packageName
+            map["versionCode"] = pkInfo.versionCode.toString()
+            map["versionName"] = pkInfo.versionName
+            result.success(map)
+            return
+        }
+        result.error("No_Such_App_Found", "App with $packageName does not exist", null)
     }
 
     private fun getAllApps(result: MethodChannel.Result) {
@@ -191,6 +244,16 @@ class LauncherHelperPlugin(registrar: Registrar) : MethodCallHandler {
             }
         }
         result.success(_output)
+    }
+
+    // Converts package info to Map
+    private fun packageInfoToMap(info: PackageInfo): Map<String, Any> {
+        val map = HashMap<String, Any>()
+        map["label"] = info.applicationInfo.loadLabel(registrar.context().getPackageManager()).toString()
+        map["packageName"] = info.packageName
+        map["versionCode"] = info.versionCode.toString()
+        map["versionName"] = info.versionName
+        return map
     }
 }
 
