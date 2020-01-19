@@ -47,10 +47,10 @@ class LauncherHelper {
     return data;
   }
 
-  /// Returns an [Applications] object with [AppInfo] of apps installed on the user's device.
-  static Future<Applications> get getApplications async {
+  /// Returns an [ApplicationCollection] object with [Application] of apps installed on the user's device.
+  static Future<ApplicationCollection> get getApplications async {
     List data = await _channel.invokeMethod('getAllApps');
-    return Applications(data);
+    return ApplicationCollection(data);
   }
 
   /// Launches an app using its package name
@@ -90,7 +90,8 @@ class LauncherHelper {
     return data;
   }
 
-  /// This asynchronously calculates luminance for an image.
+  /// This asynchronously calculates luminance for an image using dominant colors from palettes of
+  /// image.
   ///
   /// The function returns a [double] representing `luminance` from image data of `Uint8List` type.
   /// `luminance` with a brightness value between 0 for darkest and 1 for lightest.
@@ -134,6 +135,28 @@ class LauncherHelper {
     int data = await _channel.invokeMethod(
         'getBrightnessFrom', {'skipPixel': skipPixel, "imageData": imageData});
     return data;
+  }
+
+  /// A faster dart implementation to calculate brightness of an image. To replace [getLuminance].
+  /// This gets the brightness of any image (image as `Uint8List`). The function returns
+  /// a brightness level between 0 and 255, where 0 = totally black and 255 = totally bright.
+  ///
+  /// `skipPixel` parameter refers to number of pixels to skip while calculating Wallpaper's brightness.
+  /// `skipPixel` defaults to 1 (every pixel is counted) and can't be less than 1.
+  ///
+  /// __Note:__
+  /// - Still testing, I haven't completed anything in this. It's just an experimental implementation
+  /// for now, as I don't get much time to study on all this due to school. Recommended approach for now is [getBrightnessFrom]
+  static int calculateBrightness(Uint8List imageData, {int skipPixel = 1}) {
+    assert(skipPixel > 0, 'skipPixel should have a value greater than 0');
+    assert(imageData != null, 'imageData should not be null');
+    int count = 0, n = 0;
+    for (int pixel in imageData) {
+      count += pixel;
+      n += skipPixel;
+    }
+
+    return (count / (n * 3)).round();
   }
 
   /// It generates a palette based current Wallpaper to for use in UI colors.

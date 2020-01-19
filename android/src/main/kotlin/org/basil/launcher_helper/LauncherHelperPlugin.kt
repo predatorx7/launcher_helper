@@ -53,6 +53,7 @@ import java.io.ByteArrayOutputStream
 import java.util.ArrayList
 import java.util.HashMap
 
+/** LauncherHelper plugin */
 class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity) : MethodCallHandler {
 
     private var wallpaperData: ByteArray? = null
@@ -63,6 +64,7 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
     }
 
     companion object {
+        /** Plugin registration */
         @JvmStatic
         fun registerWith(registrar: Registrar) {
             val channel = MethodChannel(registrar.messenger(), "launcher_helper")
@@ -80,13 +82,15 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         when (call.method) {
             "getAllApps" -> getAllApps(result)
             "doesAppExist" -> doesAppExist(call.argument<String>("packageName").toString(), result)
-            "launchApp" -> launchApp(call.argument<String>("packageName").toString())
+            "launchApp" -> launchApp(call.argument<String>("packageName").toString(), result)
             "isAppEnabled" -> {
                 isAppEnabled(call.argument<String>("packageName").toString(), result)
             }
             "getWallpaper" -> getWallpaper(result)
             "getWallpaperBrightness" -> getWallpaperBrightness(result, call.argument<Int>("skipPixel")!!.toInt())
             "getBrightnessFrom" -> getBrightnessFrom(result, call.argument<ByteArray?>("imageData"), call.argument<Int>("skipPixel")!!.toInt())
+            "getIconOfPackage" -> getIconOfPackage(call.argument<String>("packageName").toString(), result)
+            "isAppEnabled" -> isAppEnabled(call.argument<String>("packageName").toString(), result)
             else -> result.notImplemented()
         }
     }
@@ -106,6 +110,7 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         }
     }
 
+    // This method returns brightness of a wallpaper
     private fun getWallpaperBrightness(result: MethodChannel.Result, skipPixel: Int) {
         val wallpaperManager = WallpaperManager.getInstance(registrar.context())
         val wallpaperDrawable = wallpaperManager.drawable
@@ -115,6 +120,7 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         }
     }
 
+    // Returns brightness of an image provided as ByteArray
     private fun getBrightnessFrom(result: MethodChannel.Result, image: ByteArray?, skipPixel: Int) {
         // Convert ByteArray to bitmap
         var bitmap: Bitmap = BitmapFactory.decodeByteArray(image, 0, image!!.size)
@@ -144,7 +150,7 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         return (r + b + g) / (n * 3)
     }
 
-    //
+    // Check if application is enabled.
     private fun isAppEnabled(packageName: String, result: MethodChannel.Result) {
         var isEnabled = false
         try {
@@ -178,6 +184,7 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         result.success(_output)
     }
 
+    // Method launches app with package-name
     private fun launchApp(packageName: String, result: MethodChannel.Result) {
         val i = registrar.context().getPackageManager().getLaunchIntentForPackage(packageName)
         if (i != null)
@@ -246,6 +253,11 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         result.success(_output)
     }
 
+    // Info of only this package
+    private fun getPackageInfo(packageName: String, result: MethodChannel.Result) {
+        print("Package Info")
+    }
+    // Under-development
     // Converts package info to Map
     private fun packageInfoToMap(info: PackageInfo): Map<String, Any> {
         val map = HashMap<String, Any>()

@@ -1,28 +1,16 @@
-# launcher_helper_example
+# red
 
-Demonstrates how to use the launcher_helper plugin.
+A new Flutter project.
 
 ## Getting Started
 
-Add `launcher_helper: <version>` to your project's pubspec.yaml file.
+This project is a starting point for a Flutter application.
 
-You can import this package as: `import 'package:launcher_helper/launcher_helper.dart';`
+A few resources to get you started if this is your first Flutter project:
 
-Use methods from `LauncherHelper` with try/catch in an asynchronous method as Platform messages are
-asynchronous and they may fail.
+- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
 
-Check example code.
-
-________
-
-- To get all applications & their additional information, use `getApps` method from `LauncherHelper`. It returns a List of Maps of applications with their information.
-
-- Wallpaper is fetched as **Uint8List bytes** through `getWallpaper` method. Use these ImageData bytes in `Image.memory()` as argument to parameter `bytes` to display wallpaper.
-
-- `permission_handler 3.2.2` is used in the example to get external storage access permission.
-
-- Applications can be launched with `launchApp(<Package-name>)` method of `Launcherhelper`; It requires package name of app as String to launch them.
-
-**Note**:
-
-- Don't forget to get external storage access permission before using `getWallpaper`.
+For help getting started with Flutter, view our
+[online documentation](https://flutter.dev/docs), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.

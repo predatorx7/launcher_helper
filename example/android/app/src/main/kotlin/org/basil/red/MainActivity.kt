@@ -1,4 +1,4 @@
-package org.basil.launcher_helper_example
+package org.basil.red
 
 import android.os.Bundle
 
