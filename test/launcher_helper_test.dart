@@ -7,6 +7,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:launcher_helper/launcher_helper.dart';
 
+String testAppRet() {
+  ApplicationCollection x = ApplicationCollection.fromList([
+    {"label": "hello"},
+    {"label": "dog"}
+  ]);
+  Application y = x[1];
+  return y.label;
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -31,6 +40,11 @@ void main() {
           return [];
         }),
         []);
+  });
+
+  test("Testing ApplicationCollection class", () {
+    testAppRet();
+    expect(testAppRet(), "dog");
   });
 
   String testImage = "https://example.com/image.png";

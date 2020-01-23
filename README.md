@@ -5,7 +5,11 @@ https://pub.dartlang.org/packages/launcher_helper)
 
 This plugin is made to help you when building a launcher for Android. `launcher_helper` is Androidx compatible.
 
-It offers the following features: Getting list of installed applications, launching them and getting phone's wallpaper, picking prominent colors from wallpaper or image for use in UI, etc.
+It offers the following features:
+
+- Getting list of installed applications with their icon and other details.
+- Launching application and getting phone's wallpaper.
+- Picking prominent colors from an image (wallpaper, icon, etc) for use in UI, etc.
 
 Only Android is supported. Tested on android 10, pie and oreo.
 
@@ -15,7 +19,7 @@ Only Android is supported. Tested on android 10, pie and oreo.
 - Import package as: `import 'package:launcher_helper/launcher_helper.dart';`
 - Use `LauncherHelper` class to use package methods
 - Check this [Example's README.md](https://github.com/predatorx7/launcher_helper/tree/master/example) for more information regarding this plugin's usage.
-- Check [documentation for library](doc/api/launcher_helper/LauncherHelper-class.html)
+- Check [documentation for library](https://pub.dev/documentation/launcher_helper/latest/launcher_helper/LauncherHelper-class.html)
 
 ## Note
 

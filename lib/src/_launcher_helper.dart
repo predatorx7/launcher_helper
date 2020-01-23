@@ -32,7 +32,7 @@ class LauncherHelper {
   /// Returns [ApplicationCollection] of [Application]s installed on this device.
   static Future<ApplicationCollection> get getApplications async {
     List data = await _channel.invokeMethod('getAllApps');
-    return ApplicationCollection(data);
+    return ApplicationCollection.fromList(data);
   }
 
   /// Returns [Application] matching with provided `packageName` installed on this device. Throws "No_Such_App_Found" exception if app doesn't exists.

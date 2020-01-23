@@ -273,7 +273,7 @@ class AppListPage extends StatelessWidget {
 }
 
 Future customDialogBox(Application app, BuildContext context) async {
-  await app.updateInfo();
+  await app.update();
   bool isEnabled, doesExist;
   try {
     isEnabled = await LauncherHelper.isApplicationEnabled(app.packageName);

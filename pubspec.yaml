@@ -1,6 +1,6 @@
 name: launcher_helper
-description: This plugin makes it easy for you to create launcher like apps for Android with Flutter. Only supported on Android.
-version: 0.3.0+1
+description: To help create launcher, this plugin provides information of installed apps & wallpaper, and extract colors for making UI from wallpaper or icon.
+version: 0.3.1
 # author: Mushaheed Syed <smushaheed@gmail.com>
 homepage: https://github.com/predatorx7/launcher_helper
 

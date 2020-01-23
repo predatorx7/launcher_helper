@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.3.0+1
+## 0.3.1
+
+- Changes in ApplicationCollection & Application
+
+## 0.3.0+1 to 0.3.0+3
 
 - Documentation update
 

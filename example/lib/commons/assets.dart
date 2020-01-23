@@ -1,3 +1,3 @@
 class CommonAssets {
-    // static const exampleAsset = <...> ;
+  // static const exampleAsset = <...> ;
 }

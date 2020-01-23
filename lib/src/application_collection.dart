@@ -9,15 +9,14 @@ import 'package:launcher_helper/launcher_helper.dart';
 import 'palette_generator.dart';
 
 /// This [ApplicationCollection] is a List of [Application] (which has application information).
-/// It needs a list with map of applications obtained from platform operations to create [Application].
 ///
-/// This is not a dart:collection object but provides a list of [Application] object.
+/// This is not a dart:collection object. It provides a list of [Application] object.
 class ApplicationCollection {
   /// List with [Application]s containing information for apps
   List<Application> _apps;
 
-  /// This [ApplicationCollection] constructor generates a List of [Application] (which has application information).
-  ApplicationCollection(List appList) {
+  /// This [ApplicationCollection] constructor generates a List of [Application] (which has application information) from List<Map> of Apps from MethodChannel.
+  ApplicationCollection.fromList(List appList) {
     this._apps = [];
     for (var appData in appList) {
       Application appInfo = Application(
@@ -29,7 +28,15 @@ class ApplicationCollection {
     }
   }
 
-  int get length => _apps.length;
+  /// Number of apps in list.
+  /// This property is the same as [totalApps].
+  int get length => this.totalApps;
+
+  /// Number of [Application] in this [ApplicationCollection].
+  int get totalApps => _apps.length;
+
+  /// Returns [Application] at index `i`.
+  Application operator [](int i) => _apps[i];
 
   /// Creates a [List] containing the [Application] elements of this [ApplicationCollection] instance.
   ///
@@ -39,13 +46,16 @@ class ApplicationCollection {
       List<Application>.from(this._apps, growable: growable);
 }
 
-/// This [Application] class is a model to contain Application information obtained from [ApplicationCollection]'s list or some other method.
+/// This [Application] class is a model to contain Application information.
 ///
 /// This represents a package label as [label], package name as [packageName] and
 /// icon [iconData] as a [Uint8List].
 ///
 /// Flutter Image widget can be obtained from [getIconAsImage].
 /// Color palette for icon can be obtained through [getIconPalette].
+///
+/// Package updates may change their versionName or versionCode. Thus, initially [versionName] & [versionCode] is kept empty when retrieved from [LauncherHelper.getApplications].
+/// Use [update] before using these.
 class Application {
   /// Application label
   String label;
@@ -90,9 +100,8 @@ class Application {
     return await PaletteGenerator.fromUint8List(this.iconData);
   }
 
-  /// Use this method to update [versionCode] and [versionName] for this [Application] (initially versionName & versionCode would be blank).
   /// It updates [Application] information using [Launcher.getApplicationInfo].
-  Future updateInfo() async {
+  Future update() async {
     Application appInfo =
         await LauncherHelper.getApplicationInfo(this.packageName);
     this.iconData = appInfo.iconData;
