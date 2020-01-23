@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- Introduced more methods to check if app with package-name is disabled or if it exists.
+- Changed [Applications] to [ApplicationCollection].
+- Added a method to update versionCode and versionName for an app as it changes on updates.
+- Removed inaccurate methods for brightness calculations.
+
 ## 0.2.0+1
 
 - Improved package health

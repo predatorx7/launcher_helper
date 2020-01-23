@@ -82,12 +82,9 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         when (call.method) {
             "getAllApps" -> getAllApps(result)
             "doesAppExist" -> doesAppExist(call.argument<String>("packageName").toString(), result)
-            "launchApp" -> launchApp(call.argument<String>("packageName").toString(), result)
-            "isAppEnabled" -> {
-                isAppEnabled(call.argument<String>("packageName").toString(), result)
-            }
+            "getApplicationInfo" -> getApplicationInfo(call.argument<String>("packageName").toString(), result)
+            "launchApp" -> launchApp(call.argument<String>("packageName").toString())
             "getWallpaper" -> getWallpaper(result)
-            "getWallpaperBrightness" -> getWallpaperBrightness(result, call.argument<Int>("skipPixel")!!.toInt())
             "getBrightnessFrom" -> getBrightnessFrom(result, call.argument<ByteArray?>("imageData"), call.argument<Int>("skipPixel")!!.toInt())
             "getIconOfPackage" -> getIconOfPackage(call.argument<String>("packageName").toString(), result)
             "isAppEnabled" -> isAppEnabled(call.argument<String>("packageName").toString(), result)
@@ -95,6 +92,8 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         }
     }
 
+    /** Provides device wallpaper through [MethodChannel]. Needs External read/write permission on some devices to work.
+    */
     private fun getWallpaper(result: MethodChannel.Result) {
         if (wallpaperData != null) {
             result.success(wallpaperData)
@@ -110,17 +109,8 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         }
     }
 
-    // This method returns brightness of a wallpaper
-    private fun getWallpaperBrightness(result: MethodChannel.Result, skipPixel: Int) {
-        val wallpaperManager = WallpaperManager.getInstance(registrar.context())
-        val wallpaperDrawable = wallpaperManager.drawable
-        if (wallpaperDrawable is BitmapDrawable) {
-            val brightness = calculateBrightness(wallpaperDrawable.bitmap, skipPixel)
-            result.success(brightness)
-        }
-    }
-
-    // Returns brightness of an image provided as ByteArray
+    /** Returns brightness of an image provided as image: ByteArray?
+     */
     private fun getBrightnessFrom(result: MethodChannel.Result, image: ByteArray?, skipPixel: Int) {
         // Convert ByteArray to bitmap
         var bitmap: Bitmap = BitmapFactory.decodeByteArray(image, 0, image!!.size)
@@ -128,14 +118,17 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         result.success(brightness)
     }
 
-    // Returns the brightness for an image
+    /** Calculates the brightness of an image: Bitmap.
+    */
     private fun calculateBrightness(image: Bitmap, skipPixels: Int): Int {
         var r = 0
         var g = 0
         var b = 0
         var n = 0
         val height = image.height
+        print("Height: $height")
         val width = image.width
+        print("Width: $width")
         val pixels = IntArray(width * height)
         image.getPixels(pixels, 0, width, 0, 0, width, height)
         var i = 0
@@ -147,10 +140,12 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
             n++
             i += skipPixels
         }
+        print("r g b = $r $b $g; total = $n")
         return (r + b + g) / (n * 3)
     }
 
-    // Check if application is enabled.
+    /** Check if application is enabled.
+    */
     private fun isAppEnabled(packageName: String, result: MethodChannel.Result) {
         var isEnabled = false
         try {
@@ -165,7 +160,8 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         result.success(isEnabled)
     }
 
-    // Platform method to obtain icon of package for Flutter
+    /** Platform method to obtain icon of package.
+    */
     private fun getIconOfPackage(packageName: String, result: MethodChannel.Result) {
         val manager = registrar.context().getPackageManager()
         val _output = ArrayList<Map<String, Any>>()
@@ -184,8 +180,9 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         result.success(_output)
     }
 
-    // Method launches app with package-name
-    private fun launchApp(packageName: String, result: MethodChannel.Result) {
+    /** Method launches app with package-name
+    */
+    private fun launchApp(packageName: String) {
         val i = registrar.context().getPackageManager().getLaunchIntentForPackage(packageName)
         if (i != null)
             registrar.context().startActivity(i)
@@ -199,9 +196,9 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         return bmp
     }
 
-    // Checks if application exists/available. Function gives app information if app exists.
-    // Returns error with code "No_Such_App_Found" when application with provided package does not exist
-    private fun doesAppExist(packageName: String, result: MethodChannel.Result) {
+    /** Method gives complete information on application. Function gives app information if app exists.
+    Returns error with code "No_Such_App_Found" when application with provided package does not exist */
+    private fun getApplicationInfo(packageName: String, result: MethodChannel.Result) {
         val pkManager = activity.applicationContext.packageManager
         var pkInfo: PackageInfo?
         try {
@@ -211,16 +208,39 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         }
         if (pkInfo != null) {
             val map = HashMap<String, Any>()
+            val iconData = convertToBytes(getBitmapFromDrawable(pkInfo.applicationInfo.loadIcon(pkManager)),
+            Bitmap.CompressFormat.PNG, 100)
             map["label"] = pkInfo.applicationInfo.loadLabel(registrar.context().getPackageManager()).toString()
             map["packageName"] = pkInfo.packageName
             map["versionCode"] = pkInfo.versionCode.toString()
             map["versionName"] = pkInfo.versionName
+            map["icon"] = iconData
             result.success(map)
             return
         }
         result.error("No_Such_App_Found", "App with $packageName does not exist", null)
     }
 
+    /** Checks if application exists/available. Function returns true if app exists
+    else returns false when application with provided package does not exist */
+    private fun doesAppExist(packageName: String, result: MethodChannel.Result) {
+        val pkManager = activity.applicationContext.packageManager
+        var pkInfo: PackageInfo?
+        try {
+            pkInfo = pkManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
+        } catch (e: PackageManager.NameNotFoundException) {
+            pkInfo = null
+        }
+        if (pkInfo != null) {
+            result.success(true)
+            return
+        }else {
+            result.success(false)
+        }
+    }
+
+    /** Get all installed application from [packageManager] as a map to [MethodChannel] 
+     */
     private fun getAllApps(result: MethodChannel.Result) {
 
         val intent = Intent(Intent.ACTION_MAIN, null)
@@ -236,14 +256,12 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
                 val app = manager.getApplicationInfo(
                         resInfo.activityInfo.packageName, PackageManager.GET_META_DATA)
                 if (manager.getLaunchIntentForPackage(app.packageName) != null) {
-
                     val iconData = convertToBytes(getBitmapFromDrawable(app.loadIcon(manager)),
                             Bitmap.CompressFormat.PNG, 100)
-
                     val current = HashMap<String, Any>()
                     current["label"] = app.loadLabel(manager).toString()
                     current["icon"] = iconData
-                    current["package"] = app.packageName
+                    current["packageName"] = app.packageName
                     _output.add(current)
                 }
             } catch (e: Exception) {
@@ -252,20 +270,4 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         }
         result.success(_output)
     }
-
-    // Info of only this package
-    private fun getPackageInfo(packageName: String, result: MethodChannel.Result) {
-        print("Package Info")
-    }
-    // Under-development
-    // Converts package info to Map
-    private fun packageInfoToMap(info: PackageInfo): Map<String, Any> {
-        val map = HashMap<String, Any>()
-        map["label"] = info.applicationInfo.loadLabel(registrar.context().getPackageManager()).toString()
-        map["packageName"] = info.packageName
-        map["versionCode"] = info.versionCode.toString()
-        map["versionName"] = info.versionName
-        return map
-    }
 }
-

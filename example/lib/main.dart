@@ -1,14 +1,16 @@
+import 'dart:io' as io;
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:launcher_helper/launcher_helper.dart';
-import 'package:red/commons/dark_theme.dart';
 import 'package:flutter/services.dart';
 import 'core/utils/permission_handling.dart';
-import 'package:red/commons/light_theme.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'commons/routes.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // Requesting runtime permissions
   HandlerOfPermissions().requestPerm();
   runApp(Root());
 }
@@ -16,183 +18,217 @@ void main() async {
 class Root extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    print("[Root] Under Root Widget");
-    print("Asking for permissions");
-
     return MaterialApp(
       title: 'Red',
       onGenerateRoute: generateRoute,
       themeMode: ThemeMode.system,
-      // theme: lightTheme,
       theme: ThemeData(primaryColor: Colors.blue),
-      // darkTheme: darkTheme,
-      home: HomePage(),
+      home: ShowCase(),
     );
   }
 }
 
-class WaitPage extends StatelessWidget {
+class ShowCase extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: FutureBuilder(
-          future: HandlerOfPermissions().requestPerm(),
-          builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting)
-              return CircularProgressIndicator();
-            if (snapshot.data) {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => HomePage(),
-                ),
-              );
-            }
-            return Text("Permissions request failed");
-          },
-        ),
+  _ShowCaseState createState() => _ShowCaseState();
+}
+
+class _ShowCaseState extends State<ShowCase> {
+  // Static method to show a [SnackBar] with `message`
+  static ScaffoldFeatureController<SnackBar, SnackBarClosedReason> showFailure(
+      String message, BuildContext context) {
+    print("[Failure] $message");
+    return Scaffold.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
       ),
     );
   }
-}
-
-class HomePage extends StatefulWidget {
-  @override
-  _HomePageState createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  int numberOfInstalledApps;
-  ApplicationCollection installedApps;
-  var wallpaper;
-  PaletteGenerator palette;
-  int brightness, brightness2;
-
-  @override
-  void initState() {
-    super.initState();
-    initPlatformState();
-  }
-
-  Future<void> initPlatformState() async {
-    ApplicationCollection apps;
-    var imageData, _palette;
-    int _brightness, _brightness2;
-
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    try {
-      // Get all apps
-      apps = await LauncherHelper.getApplications;
-      // Get wallpaper as binary data
-      imageData = await LauncherHelper.getWallpaper;
-      // Generate palette
-      _palette = await LauncherHelper.wallpaperPalette;
-      // Get brightness
-      _brightness = await LauncherHelper.getWallpaperBrightness(skipPixel: 50);
-
-      _brightness2 = await LauncherHelper.getBrightnessFrom(imageData);
-    } on PlatformException {
-      print('Failed to get apps or wallpaper');
-    }
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-    setState(() {
-      numberOfInstalledApps = apps.length;
-      installedApps = apps;
-      wallpaper = imageData;
-      palette = _palette;
-      brightness = _brightness;
-      brightness2 = _brightness2; 
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    var colors = palette?.colors;
-    print("[Home] Under HomePage Screen");
     return Scaffold(
       appBar: AppBar(
-        title: Text("Launcher Helper"),
+        title: Text("Showcase"),
       ),
-      body: SingleChildScrollView(
-        child: Container(
-          padding: EdgeInsets.only(left: 10, right: 10),
-          child: Column(
-            children: <Widget>[
-              new Text("Found $numberOfInstalledApps apps installed"),
-              (wallpaper != null)
-                  ? new FutureBuilder(
-                      future: // Get luminance
-                          LauncherHelper.getLuminance(imageData: wallpaper),
-                      builder:
-                          (BuildContext context, AsyncSnapshot<double> aSnap) {
-                        if (aSnap.hasData) {
-                          return Container(
-                            child: Column(
-                              children: <Widget>[
-                                Text('Is wallpaper dark? ${aSnap.data > 0.5}'),
-                                Text('Luminance: ${aSnap.data}'),
-                              ],
-                            ),
-                          );
-                        } else
-                          return Container();
-                      },
-                    )
-                  : Container(),
-              wallpaper != null
-                  ? new Image.memory(wallpaper, fit: BoxFit.scaleDown)
-                  : new Center(),
-              Text("Below is this wallpaper's dominant Color: "),
-              Container(
-                height: 50,
-                width: 50,
-                color: colors != null ? colors?.toList()[0] ?? null : null,
-              ),
-              Text(
-                  'Wallpaper brightness calculated from every pixel is: $brightness'),
-              SizedBox(
-                height: 5,
-              ),
-              Text(
-                  'Wallpaper brightness calculated from every pixel is (2nd method): $brightness2'),
-              SizedBox(
-                height: 5,
-              ),
-              Text("By pure dart (Under experimentations): "),
-              (wallpaper != null)
-                  ? new Builder(
-                      builder: (BuildContext context) {
-                        int value =
-                            LauncherHelper.calculateBrightness(wallpaper);
-                        return Container(
-                          child: Column(
-                            children: <Widget>[
-                              Text('Is wallpaper dark? ${value> 0.5}'),
-                              Text('Brightness: ${value}'),
-                            ],
-                          ),
-                        );
-                      },
-                    )
-                  : Container(),
-              OutlineButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => AppListPage(
-                        appList: installedApps,
-                      ),
+      body: ListView(
+        children: <Widget>[
+          ListTile(
+            title: Text("For Wallpaper"),
+            onTap: () async {
+              // Platform messages may fail, so we use a try/catch PlatformException.
+              try {
+                // Get wallpaper as binary data
+                Uint8List imageData = await LauncherHelper.getWallpaper;
+                // Pushing show Wallpaper page
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ShowWallpaper(
+                      imageData,
                     ),
-                  );
-                },
-                child: Text('Next Page'),
-              ),
-            ],
+                  ),
+                );
+              } on PlatformException {
+                String message = 'Failed to get wallpaper, check permissions';
+                showFailure(message, context);
+              }
+            },
           ),
-        ),
+          ListTile(
+            title: Text("For any image"),
+            onTap: () async {
+              // Platform messages may fail, so we use a try/catch PlatformException.
+              try {
+                // Get image from image picker
+                io.File image =
+                    await ImagePicker.pickImage(source: ImageSource.gallery);
+
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ShowImage(
+                      // using readAsBytesSync to get Uint8List from image
+                      image.readAsBytesSync(),
+                    ),
+                  ),
+                );
+              } catch (e) {
+                String message = 'Failed to get image';
+                showFailure(message, context);
+              }
+            },
+          ),
+          ListTile(
+            title: Text("For Device applications"),
+            onTap: () async {
+              // Platform messages may fail, so we use a try/catch PlatformException.
+              try {
+                // Get all apps
+                ApplicationCollection apps =
+                    await LauncherHelper.getApplications;
+                // Do something
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => AppListPage(
+                      appList: apps,
+                    ),
+                  ),
+                );
+              } on PlatformException {
+                String message = 'Failed to get apps';
+                showFailure(message, context);
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ShowWallpaper extends StatefulWidget {
+  final Uint8List imageData;
+  const ShowWallpaper(this.imageData);
+
+  @override
+  _ShowWallpaperState createState() => _ShowWallpaperState();
+}
+
+class _ShowWallpaperState extends State<ShowWallpaper> {
+  int brightness;
+  double luminance, brightnessDart;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Methods for wallpaper"),
+      ),
+      body: GridView.count(
+        crossAxisCount: 1,
+        mainAxisSpacing: 5,
+        children: <Widget>[
+          Card(
+            child: GridTile(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Image.memory(
+                  widget.imageData,
+                ),
+              ),
+              footer: Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Text("Home screen wallpaper"),
+              ),
+            ),
+          ),
+          ListTile(
+            title: Text(
+                "Tap to check wallpaper brightness (using native method)\nReturns a brightness level between 0 and 255, where 0 = totally black and 255 = totally bright."),
+            subtitle: Text(brightness?.toString() ?? ""),
+            onTap: () async {
+              brightness =
+                  await LauncherHelper.calculateBrightness(widget.imageData);
+              print("Brightness (native): $brightness");
+              setState(() {
+                brightness = brightness;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ShowImage extends StatefulWidget {
+  final Uint8List imageData;
+  const ShowImage(this.imageData);
+
+  @override
+  _ShowImageState createState() => _ShowImageState();
+}
+
+class _ShowImageState extends State<ShowImage> {
+  int brightness;
+  double luminance, brightnessDart;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Methods for any image"),
+      ),
+      body: ListView(
+        children: <Widget>[
+          Card(
+            child: ListTile(
+              title: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Image.memory(
+                  widget.imageData,
+                  fit: BoxFit.fitWidth,
+                ),
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Text("This is the image you picked"),
+              ),
+            ),
+          ),
+          ListTile(
+            title: Text(
+                "Tap to check image brightness (using native method)\nReturns a brightness level between 0 and 255, where 0 = totally black and 255 = totally bright."),
+            subtitle: Text(brightness?.toString() ?? ""),
+            onTap: () async {
+              // Method to calculate brightness using native method from platform channel
+              brightness =
+                  await LauncherHelper.calculateBrightness(widget.imageData);
+              print("Brightness (native): $brightness");
+              // updates brightness state
+              setState(() {
+                brightness = brightness;
+              });
+            },
+          ),
+        ],
       ),
     );
   }
@@ -205,7 +241,7 @@ class AppListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Installed Apps'),
+        title: Text('Installed ${appList.length} Apps'),
       ),
       body: ListView.builder(
         itemCount: appList.length,
@@ -213,7 +249,8 @@ class AppListPage extends StatelessWidget {
           var app = appList.toList()[index];
           return ListTile(
             onTap: () {
-              LauncherHelper.launchApp(app.packageName);
+              // LauncherHelper.launchApp(app.packageName);
+              return customDialogBox(app, context);
             },
             leading: Container(
               height: 50,
@@ -233,4 +270,85 @@ class AppListPage extends StatelessWidget {
       ),
     );
   }
+}
+
+Future customDialogBox(Application app, BuildContext context) async {
+  await app.updateInfo();
+  bool isEnabled, doesExist;
+  try {
+    isEnabled = await LauncherHelper.isApplicationEnabled(app.packageName);
+    doesExist = await LauncherHelper.doesApplicationExist(app.packageName);
+  } on PlatformException {
+    print("Platform error");
+  }
+  var palette = await LauncherHelper.generatePalette(app.iconData);
+  Color dominantColor = palette.colors.first;
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        content: new Container(
+          child: new Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              // dialog top
+              new Row(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: CircleAvatar(
+                      backgroundImage: Image.memory(app.iconData).image,
+                    ),
+                  ),
+                  new Container(
+                    child: new Text(
+                      app.label,
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 18.0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              // dialog centre
+              new Container(
+                child: Text(app.packageName),
+              ),
+              new Container(
+                child: Text("Version name: ${app.versionName}"),
+              ),
+              new Container(
+                child: Text("Version code: ${app.versionCode}"),
+              ),
+              new Container(
+                child: Text("Is app enabled? : $isEnabled"),
+              ),
+              new Container(
+                child: Text("Does app exist?: $doesExist"),
+              ),
+
+              // dialog bottom
+              Text("Dominant color"),
+              Container(
+                padding: EdgeInsets.all(8),
+                margin: EdgeInsets.all(8),
+                color: dominantColor,
+                height: 50,
+                width: 50,
+              ),
+              RaisedButton(
+                onPressed: () {
+                  LauncherHelper.launchApp(app.packageName);
+                },
+                child: Text("Launch"),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }
