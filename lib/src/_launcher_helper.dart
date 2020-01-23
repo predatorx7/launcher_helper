@@ -37,29 +37,33 @@ class LauncherHelper {
 
   /// Returns [Application] matching with provided `packageName` installed on this device. Throws "No_Such_App_Found" exception if app doesn't exists.
   static Future<Application> getApplicationInfo(String packageName) async {
-    Map data = await _channel.invokeMethod('getApplicationInfo', {"packageName": packageName});
+    Map data = await _channel
+        .invokeMethod('getApplicationInfo', {"packageName": packageName});
     return Application.fromMap(data);
   }
 
   /// Returns true if application exists else false if it doesn't exist. Throws "No_Such_App_Found" exception if app doesn't exists.
   static Future<bool> doesApplicationExist(String packageName) async {
-    bool data = await _channel.invokeMethod('doesAppExist', {"packageName": packageName});
+    bool data = await _channel
+        .invokeMethod('doesAppExist', {"packageName": packageName});
     return data;
   }
 
   /// Returns true if application is enabled else false if it isn't enabled. Throws "No_Such_App_Found" exception if app doesn't exists.
   static Future<bool> isApplicationEnabled(String packageName) async {
-    bool data = await _channel.invokeMethod('isAppEnabled', {"packageName": packageName});
+    bool data = await _channel
+        .invokeMethod('isAppEnabled', {"packageName": packageName});
     return data;
   }
 
-  /// Returns application. Throws "No_Such_App_Found" exception if app or app-icon doesn't exists.
+  /// Returns application icon. Throws "No_Such_App_Found" exception if app or app-icon doesn't exists.
   static Future<bool> getApplicationIcon(String packageName) async {
-    bool data = await _channel.invokeMethod('getIconOfPackage', {"packageName": packageName});
+    bool data = await _channel
+        .invokeMethod('getIconOfPackage', {"packageName": packageName});
     return data;
   }
 
-  /// Launches an app using its package name
+  /// Launches an app using its package name.
   static Future<bool> launchApp(String packageName) async {
     try {
       await _channel.invokeMethod("launchApp", {"packageName": packageName});

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the calculateBrightness method from the LauncherHelper class, for the Dart programming language.">
+  <title>calculateBrightness method - LauncherHelper class - launcher_helper library - Dart API</title>
+  <!-- required because all the links are pseudo-absolute -->
+  <base href="../..">
+
+  <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500,400i,400,300|Source+Sans+Pro:400,300,700" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="static-assets/github.css">
+  <link rel="stylesheet" href="static-assets/styles.css">
+  <link rel="icon" href="static-assets/favicon.png">
+  <!-- header placeholder -->
+</head>
+
+<body>
+
+<div id="overlay-under-drawer"></div>
+
+<header id="title">
+  <button id="sidenav-left-toggle" type="button">&nbsp;</button>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="index.html">launcher_helper</a></li>
+    <li><a href="launcher_helper/launcher_helper-library.html">launcher_helper</a></li>
+    <li><a href="launcher_helper/LauncherHelper-class.html">LauncherHelper</a></li>
+    <li class="self-crumb">calculateBrightness method</li>
+  </ol>
+  <div class="self-name">calculateBrightness</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+
+<main>
+
+  <div id="dartdoc-sidebar-left" class="col-xs-6 col-sm-3 col-md-2 sidebar sidebar-offcanvas-left">
+    <header id="header-search-sidebar" class="hidden-l">
+      <form class="search-sidebar" role="search">
+        <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+      </form>
+    </header>
+    
+    <ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+      <li><a href="index.html">launcher_helper</a></li>
+      <li><a href="launcher_helper/launcher_helper-library.html">launcher_helper</a></li>
+      <li><a href="launcher_helper/LauncherHelper-class.html">LauncherHelper</a></li>
+      <li class="self-crumb">calculateBrightness method</li>
+    </ol>
+    
+    <h5>LauncherHelper class</h5>
+    <ol>
+    
+        <li class="section-title"><a href="launcher_helper/LauncherHelper-class.html#constructors">Constructors</a></li>
+        <li><a href="launcher_helper/LauncherHelper/LauncherHelper.html">LauncherHelper</a></li>
+    
+        <li class="section-title inherited">
+            <a href="launcher_helper/LauncherHelper-class.html#instance-properties">Properties</a>
+        </li>
+        <li class="inherited"><a href="dart-core/Object/hashCode.html">hashCode</a></li>
+        <li class="inherited"><a href="dart-core/Object/runtimeType.html">runtimeType</a></li>
+    
+        <li class="section-title inherited"><a href="launcher_helper/LauncherHelper-class.html#instance-methods">Methods</a></li>
+        <li class="inherited"><a href="dart-core/Object/noSuchMethod.html">noSuchMethod</a></li>
+        <li class="inherited"><a href="dart-core/Object/toString.html">toString</a></li>
+    
+        <li class="section-title inherited"><a href="launcher_helper/LauncherHelper-class.html#operators">Operators</a></li>
+        <li class="inherited"><a href="dart-core/Object/operator_equals.html">operator ==</a></li>
+    
+        <li class="section-title"><a href="launcher_helper/LauncherHelper-class.html#static-properties">Static properties</a></li>
+        <li><a href="launcher_helper/LauncherHelper/getApplications.html">getApplications</a></li>
+        <li><a href="launcher_helper/LauncherHelper/getWallpaper.html">getWallpaper</a></li>
+    
+        <li class="section-title"><a href="launcher_helper/LauncherHelper-class.html#static-methods">Static methods</a></li>
+        <li><a href="launcher_helper/LauncherHelper/calculateBrightness.html">calculateBrightness</a></li>
+        <li><a href="launcher_helper/LauncherHelper/doesApplicationExist.html">doesApplicationExist</a></li>
+        <li><a href="launcher_helper/LauncherHelper/generatePalette.html">generatePalette</a></li>
+        <li><a href="launcher_helper/LauncherHelper/getApplicationIcon.html">getApplicationIcon</a></li>
+        <li><a href="launcher_helper/LauncherHelper/getApplicationInfo.html">getApplicationInfo</a></li>
+        <li><a href="launcher_helper/LauncherHelper/isApplicationEnabled.html">isApplicationEnabled</a></li>
+        <li><a href="launcher_helper/LauncherHelper/launchApp.html">launchApp</a></li>
+    
+    
+    
+    </ol>
+  </div><!--/.sidebar-offcanvas-->
+
+  <div id="dartdoc-main-content" class="col-xs-12 col-sm-9 col-md-8 main-content">
+      <div><h1><span class="kind-method">calculateBrightness</span> method</h1></div>
+
+    <section class="multi-line-signature">
+      <span class="returntype"><a href="dart-async/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="dart-core/int-class.html">int</a></span>&gt;</span></span>
+            <span class="name ">calculateBrightness</span>
+(<wbr><span class="parameter" id="calculateBrightness-param-imageData"><span class="type-annotation"><a href="dart-typed_data/Uint8List-class.html">Uint8List</a></span> <span class="parameter-name">imageData</span>, {</span> <span class="parameter" id="calculateBrightness-param-skipPixel"><span class="type-annotation"><a href="dart-core/int-class.html">int</a></span> <span class="parameter-name">skipPixel</span>: <span class="default-value">1</span></span> })
+      
+    </section>
+    <section class="desc markdown">
+      <p>This gets the brightness of any image (image as <code>Uint8List</code>). The function returns
+a brightness level between 0 and 255, where 0 = totally black and 255 = totally bright.</p>
+<p><code>skipPixel</code> parameter refers to number of pixels to skip while calculating Wallpaper's brightness.
+<code>skipPixel</code> defaults to 1 (every pixel is counted) and can't be less than 1.</p>
+<p><strong>Note:</strong></p>
+<ul>
+<li>This method needs the READ_EXTERNAL_STORAGE permission on Android Oreo &amp; above.</li>
+<li>This uses kotlin implementation for calculating brightness.</li>
+</ul>
+    </section>
+    
+    <section class="summary source-code" id="source">
+      <h2><span>Implementation</span></h2>
+      <pre class="language-dart"><code class="language-dart">static Future&lt;int&gt; calculateBrightness(Uint8List imageData,
+    {int skipPixel = 1}) async {
+  assert(skipPixel &gt; 0, &#39;skipPixel should have a value greater than 0&#39;);
+  assert(imageData != null, &#39;imageData should not be null&#39;);
+  int data = await _channel.invokeMethod(
+      &#39;getBrightnessFrom&#39;, {&#39;skipPixel&#39;: skipPixel, &quot;imageData&quot;: imageData});
+  return data;
+}</code></pre>
+    </section>
+
+  </div> <!-- /.main-content -->
+
+  <div id="dartdoc-sidebar-right" class="col-xs-6 col-sm-6 col-md-2 sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+
+</main>
+
+<footer>
+  <span class="no-break">
+    launcher_helper
+      0.3.0+1
+  </span>
+
+  <!-- footer-text placeholder -->
+</footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="static-assets/typeahead.bundle.min.js"></script>
+<script src="static-assets/highlight.pack.js"></script>
+<script src="static-assets/URI.js"></script>
+<script src="static-assets/script.js"></script>
+<!-- footer placeholder -->
+
+</body>
+
+</html>

@@ -1,6 +1,6 @@
 name: launcher_helper
 description: This plugin makes it easy for you to create launcher like apps for Android with Flutter. Only supported on Android.
-version: 0.3.0
+version: 0.3.0+1
 # author: Mushaheed Syed <smushaheed@gmail.com>
 homepage: https://github.com/predatorx7/launcher_helper
 
@@ -15,7 +15,6 @@ dependencies:
   path: ^1.6.1
 
 dev_dependencies:
-  image_test_utils: ^1.0.0
   flutter_test:
     sdk: flutter
     

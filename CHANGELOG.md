@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0+1
+
+- Documentation update
+
 ## 0.3.0
 
 - Introduced more methods to check if app with package-name is disabled or if it exists.

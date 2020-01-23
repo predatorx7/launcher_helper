@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:image_test_utils/image_test_utils.dart';
 import 'package:launcher_helper/launcher_helper.dart';
 
 void main() {
@@ -37,17 +36,15 @@ void main() {
   String testImage = "https://example.com/image.png";
   testWidgets('image brightness check', (WidgetTester tester) async {
     var img;
-    provideMockedNetworkImages(() async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(builder: (context) {
-            var x = Image.network(testImage);
-            img = x.image;
-            return x;
-          }),
-        ),
-      );
-    });
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(builder: (context) {
+          var x = Image.network(testImage);
+          img = x.image;
+          return x;
+        }),
+      ),
+    );
     Completer<ImageInfo> completer = Completer();
     img
         .resolve(ImageConfiguration())
