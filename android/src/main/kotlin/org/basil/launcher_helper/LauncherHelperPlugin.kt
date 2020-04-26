@@ -41,8 +41,11 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.os.Build
+import androidx.annotation.RequiresApi
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
@@ -160,26 +163,6 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         result.success(isEnabled)
     }
 
-    /** Platform method to obtain icon of package.
-    */
-    private fun getIconOfPackage(packageName: String, result: MethodChannel.Result) {
-        val manager = registrar.context().getPackageManager()
-        val _output = ArrayList<Map<String, Any>>()
-        try {
-            val map = HashMap<String, Any>()
-            val icon = manager.getApplicationIcon(packageName)
-            val iconData = convertToBytes(getBitmapFromDrawable(icon),
-                    Bitmap.CompressFormat.PNG, 100)
-            map["iconData"] = iconData
-            _output.add(map)
-            result.success(iconData)
-        } catch (e: PackageManager.NameNotFoundException) {
-            e.printStackTrace()
-            result.error("No_Such_App_Found", e.message + " " + packageName, e)
-        }
-        result.success(_output)
-    }
-
     /** Method launches app with package-name
     */
     private fun launchApp(packageName: String) {
@@ -196,29 +179,86 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         return bmp
     }
 
+    private fun getApplicationInfo(packageName: String, result: MethodChannel.Result){
+        val pkManager = activity.applicationContext.packageManager
+        try {
+            val map = getApplicationMap(packageName, pkManager)
+            result.success(map)
+        } catch (e: PackageManager.NameNotFoundException) {
+            result.error("No_Such_App_Found", "App with $packageName does not exist", null)
+        }
+    }
+
     /** Method gives complete information on application. Function gives app information if app exists.
     Returns error with code "No_Such_App_Found" when application with provided package does not exist */
-    private fun getApplicationInfo(packageName: String, result: MethodChannel.Result) {
+    private fun getApplicationMap(packageName: String, pkManager: PackageManager): HashMap<String, Any> {
+        val map = HashMap<String, Any>()
+        val pkInfo: PackageInfo = pkManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
+        val iconMap: HashMap<String, ByteArray> = getIcon(pkInfo.applicationInfo.loadIcon(pkManager))
+        map["label"] = pkInfo.applicationInfo.loadLabel(registrar.context().getPackageManager()).toString()
+        map["packageName"] = pkInfo.packageName
+        map["versionCode"] = pkInfo.versionCode.toString()
+        map["versionName"] = pkInfo.versionName
+        map["icon"] = iconMap
+        return map
+    }
+
+    /** Method gives complete information on application. Function gives app information if app exists.
+    Returns error with code "No_Such_App_Found" when application with provided package does not exist */
+    private fun getApplicationMap(packageName: String): HashMap<String, Any> {
+        val map = HashMap<String, Any>()
         val pkManager = activity.applicationContext.packageManager
-        var pkInfo: PackageInfo?
+        return getApplicationMap(packageName, pkManager)
+    }
+
+    private fun getIconOfPackage(packageName: String, result: MethodChannel.Result) {
+        val pkManager = activity.applicationContext.packageManager
         try {
-            pkInfo = pkManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
-        } catch (e: PackageManager.NameNotFoundException) {
-            pkInfo = null
+            val drawable: Drawable = pkManager.getApplicationIcon(packageName)
+            val icon: HashMap<String, ByteArray> = getIcon(drawable)
+            result.success(icon)
+        } catch (e: PackageManager.NameNotFoundException){
+            result.error("No_Such_App_Found", "App with $packageName does not exist", null)
         }
-        if (pkInfo != null) {
-            val map = HashMap<String, Any>()
-            val iconData = convertToBytes(getBitmapFromDrawable(pkInfo.applicationInfo.loadIcon(pkManager)),
-            Bitmap.CompressFormat.PNG, 100)
-            map["label"] = pkInfo.applicationInfo.loadLabel(registrar.context().getPackageManager()).toString()
-            map["packageName"] = pkInfo.packageName
-            map["versionCode"] = pkInfo.versionCode.toString()
-            map["versionName"] = pkInfo.versionName
-            map["icon"] = iconData
-            result.success(map)
-            return
+    }
+
+    private fun getIcon(icon: Drawable): HashMap<String, ByteArray> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            getAdaptiveIcon(icon)
+        } else {
+            getRegularIcon(icon)
         }
-        result.error("No_Such_App_Found", "App with $packageName does not exist", null)
+    }
+    /** Platform method to obtain icon of package for Android build version lower than 26.
+     */
+    private fun getRegularIcon(icon: Drawable): HashMap<String, ByteArray> {
+        val map = HashMap<String, ByteArray>()
+        val iconData: ByteArray = convertToBytes(getBitmapFromDrawable(icon),
+                Bitmap.CompressFormat.PNG, 100)
+        map["iconData"] = iconData
+        return map
+    }
+
+    /** Platform method to obtain adaptive-icon of package for Android build version 26 & above.
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun getAdaptiveIcon(icon: Drawable): HashMap<String, ByteArray> {
+        val iconMap = HashMap<String, ByteArray>()
+        if (icon is BitmapDrawable){
+            iconMap["iconData"] = convertToBytes(icon.getBitmap(),Bitmap.CompressFormat.PNG, 100)
+            return iconMap
+        }
+        val backgroundDr: Drawable = (icon as AdaptiveIconDrawable).getBackground()
+        val foregroundDr: Drawable = (icon as AdaptiveIconDrawable).getForeground()
+        val iconForegroundData: ByteArray
+        val iconBackgroundData: ByteArray
+        iconForegroundData = convertToBytes(getBitmapFromDrawable(foregroundDr),
+                Bitmap.CompressFormat.PNG, 100)
+        iconBackgroundData = convertToBytes(getBitmapFromDrawable(backgroundDr),
+                Bitmap.CompressFormat.PNG, 100)
+        iconMap["iconForegroundData"] = iconForegroundData
+        iconMap["iconBackgroundData"] = iconBackgroundData
+        return iconMap
     }
 
     /** Checks if application exists/available. Function returns true if app exists
@@ -234,12 +274,12 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         if (pkInfo != null) {
             result.success(true)
             return
-        }else {
+        } else {
             result.success(false)
         }
     }
 
-    /** Get all installed application from [packageManager] as a map to [MethodChannel] 
+    /** Get all installed application from [PackageManager] as a map to [MethodChannel]
      */
     private fun getAllApps(result: MethodChannel.Result) {
 
@@ -256,12 +296,7 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
                 val app = manager.getApplicationInfo(
                         resInfo.activityInfo.packageName, PackageManager.GET_META_DATA)
                 if (manager.getLaunchIntentForPackage(app.packageName) != null) {
-                    val iconData = convertToBytes(getBitmapFromDrawable(app.loadIcon(manager)),
-                            Bitmap.CompressFormat.PNG, 100)
-                    val current = HashMap<String, Any>()
-                    current["label"] = app.loadLabel(manager).toString()
-                    current["icon"] = iconData
-                    current["packageName"] = app.packageName
+                    val current = getApplicationMap(app.packageName, manager)
                     _output.add(current)
                 }
             } catch (e: Exception) {

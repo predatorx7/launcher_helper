@@ -20,9 +20,10 @@ class ApplicationCollection {
     this._apps = [];
     for (var appData in appList) {
       Application appInfo = Application(
-        label: appData["label"],
-        packageName: appData["packageName"],
-        iconData: appData["icon"],
+        label: appData["label"] as String,
+        packageName: appData["packageName"] as String,
+        /// TODO(predatorx7): handle - {'icon':{'iconData':<Uint8List> ?? null, 'iconForegroundData':<Uint8List> ?? null,'iconBackgroundData':<Uint8List> ?? null}}
+        iconData: appData["icon"] as Uint8List,
       );
       this._apps.add(appInfo);
     }

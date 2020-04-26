@@ -56,9 +56,13 @@ class LauncherHelper {
     return data;
   }
 
-  /// Returns application icon. Throws "No_Such_App_Found" exception if app or app-icon doesn't exists.
-  static Future<bool> getApplicationIcon(String packageName) async {
-    bool data = await _channel
+  /// Returns application icon. Throws "No_Such_App_Found" exception if app or app-icon doesn't exists for the package.
+  /// Result is a Map as
+  /// ```
+  /// {'iconData':<Uint8List> ?? null, 'iconForegroundData':<Uint8List> ?? null,'iconBackgroundData':<Uint8List> ?? null}
+  /// ```
+  static Future<Map<String, dynamic>> getApplicationIcon(String packageName) async {
+    Map<String, dynamic> data = await _channel
         .invokeMethod('getIconOfPackage', {"packageName": packageName});
     return data;
   }
