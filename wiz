@@ -6,6 +6,7 @@ printf "current branch: $current_branch\n\n"
 if [[ $1 == "publish" ]]; then
     version=$2
     version_msg=$3
+    echo "preparing"
     pub get
     flutter clean
     flutter format .
@@ -15,7 +16,10 @@ if [[ $1 == "publish" ]]; then
     echo "Pushing the version $version to the remote repository."
     git push --tags
     pub publish
+elif [[ $1 == "list" ]]; then
+    echo "Previous releases:"
+    echo $(git tag)
 else
-    echo "If publishing use:"
-    echo "  wiz publish <version> <message>"
+    printf "If publishing use:\n  wiz publish <version> <message>\n"
+    printf "To check previous releases:\n  wiz list\n"
 fi

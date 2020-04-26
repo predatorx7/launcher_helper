@@ -10,14 +10,14 @@ import 'package:image_picker/image_picker.dart';
 import 'commons/routes.dart';
 
 void main() async {
-  // Requesting runtime permissions
-  HandlerOfPermissions().requestPerm();
   runApp(Root());
 }
 
 class Root extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // Requesting runtime permissions
+    HandlerOfPermissions().requestPerm();
     return MaterialApp(
       title: 'Red',
       onGenerateRoute: generateRoute,
