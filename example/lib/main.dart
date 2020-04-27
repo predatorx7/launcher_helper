@@ -255,9 +255,7 @@ class AppListPage extends StatelessWidget {
             leading: Container(
               height: 50,
               width: 50,
-              child: Image.memory(
-                app.iconData,
-              ),
+              child: app.getAppIcon()
             ),
             title: Text(
               app.label,
@@ -281,7 +279,7 @@ Future customDialogBox(Application app, BuildContext context) async {
   } on PlatformException {
     print("Platform error");
   }
-  var palette = await LauncherHelper.generatePalette(app.iconData);
+  var palette = await LauncherHelper.generatePalette(app.iconForeground);
   Color dominantColor = palette.colors.first;
   return showDialog(
     context: context,
@@ -297,9 +295,7 @@ Future customDialogBox(Application app, BuildContext context) async {
                 children: <Widget>[
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: CircleAvatar(
-                      backgroundImage: Image.memory(app.iconData).image,
-                    ),
+                    child: app.getAppIcon()
                   ),
                   new Container(
                     child: new Text(

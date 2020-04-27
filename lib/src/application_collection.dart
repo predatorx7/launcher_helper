@@ -2,10 +2,12 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
+import 'dart:convert';
+import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'package:flutter/widgets.dart';
 import 'package:launcher_helper/launcher_helper.dart';
+import '_icon.dart';
 import 'palette_generator.dart';
 
 /// This [ApplicationCollection] is a List of [Application] (which has application information).
@@ -22,8 +24,7 @@ class ApplicationCollection {
       Application appInfo = Application(
         label: appData["label"] as String,
         packageName: appData["packageName"] as String,
-        /// TODO(predatorx7): handle - {'icon':{'iconData':<Uint8List> ?? null, 'iconForegroundData':<Uint8List> ?? null,'iconBackgroundData':<Uint8List> ?? null}}
-        iconData: appData["icon"] as Uint8List,
+        icon: appData['icon'],
       );
       this._apps.add(appInfo);
     }
@@ -50,7 +51,7 @@ class ApplicationCollection {
 /// This [Application] class is a model to contain Application information.
 ///
 /// This represents a package label as [label], package name as [packageName] and
-/// icon [iconData] as a [Uint8List].
+/// icon [_iconDataMap] as a [Uint8List].
 ///
 /// Flutter Image widget can be obtained from [getIconAsImage].
 /// Color palette for icon can be obtained through [getIconPalette].
@@ -65,7 +66,7 @@ class Application {
   String packageName;
 
   /// Application icon
-  Uint8List iconData;
+  Map<dynamic, dynamic> _iconDataMap;
 
   var _versionName;
 
@@ -78,34 +79,49 @@ class Application {
   get versionCode => _versionCode;
 
   /// Creates [Application] with
-  Application({String label, String packageName, Uint8List iconData})
+  Application({String label, String packageName, Map<dynamic, dynamic> icon})
       : this.label = label,
         this.packageName = packageName,
-        this.iconData = iconData;
+        this._iconDataMap = icon;
 
   /// Creates [Application] from map
   Application.fromMap(appData)
       : this.label = appData["label"] ?? '',
         this.packageName = appData["packageName"] ?? '',
-        this.iconData = appData["icon"] ?? '',
+        this._iconDataMap = appData["icon"],
         this._versionCode = appData["versionCode"] ?? '',
         this._versionName = appData["versionName"] ?? '';
 
-  /// Creates a flutter Image widget from obtained iconData [Uint8List]
-  Image getIconAsImage() {
-    return Image.memory(this.iconData);
+  bool get isAdaptableIcon {
+    if (this._iconDataMap['iconBackgroundData'] == null) {
+      return false;
+    }
+    return true;
   }
 
-  /// Returns palette of colors generated from this [Application]'s [iconData] for use in UI.
+  final String _iconDat = 'iconData';
+  final String _iconFg = 'iconForegroundData';
+  final String _iconBg = 'iconBackgroundData';
+
+  Uint8List get iconForeground =>
+      this._iconDataMap[_iconFg] ?? this._iconDataMap[_iconDat];
+  Uint8List get iconBackground => this._iconDataMap[_iconBg] ?? null;
+
+  /// Creates a flutter Image widget from obtained iconData [Uint8List]
+  AppIcon getAppIcon() {
+    return AppIcon.fromMap(_iconDataMap);
+  }
+
+  /// Returns palette of colors generated from this [Application]'s [_iconDataMap] for use in UI.
   Future<PaletteGenerator> getIconPalette() async {
-    return await PaletteGenerator.fromUint8List(this.iconData);
+    return await PaletteGenerator.fromUint8List(this.iconForeground);
   }
 
   /// It updates [Application] information using [Launcher.getApplicationInfo].
   Future update() async {
     Application appInfo =
         await LauncherHelper.getApplicationInfo(this.packageName);
-    this.iconData = appInfo.iconData;
+    this._iconDataMap = appInfo._iconDataMap;
     this.label = appInfo.label;
     this.packageName = appInfo.packageName;
     this._versionCode = appInfo.versionCode;

@@ -44,8 +44,10 @@ import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.VectorDrawable
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.core.graphics.drawable.DrawableCompat
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
@@ -53,8 +55,7 @@ import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import java.io.ByteArrayOutputStream
-import java.util.ArrayList
-import java.util.HashMap
+import java.util.*
 
 /** LauncherHelper plugin */
 class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity) : MethodCallHandler {
@@ -96,7 +97,7 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
     }
 
     /** Provides device wallpaper through [MethodChannel]. Needs External read/write permission on some devices to work.
-    */
+     */
     private fun getWallpaper(result: MethodChannel.Result) {
         if (wallpaperData != null) {
             result.success(wallpaperData)
@@ -122,7 +123,7 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
     }
 
     /** Calculates the brightness of an image: Bitmap.
-    */
+     */
     private fun calculateBrightness(image: Bitmap, skipPixels: Int): Int {
         var r = 0
         var g = 0
@@ -148,7 +149,7 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
     }
 
     /** Check if application is enabled.
-    */
+     */
     private fun isAppEnabled(packageName: String, result: MethodChannel.Result) {
         var isEnabled = false
         try {
@@ -164,22 +165,54 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
     }
 
     /** Method launches app with package-name
-    */
+     */
     private fun launchApp(packageName: String) {
         val i = registrar.context().getPackageManager().getLaunchIntentForPackage(packageName)
         if (i != null)
             registrar.context().startActivity(i)
     }
 
+//    private fun getBitmapFromDrawable(drawable: Drawable): Bitmap {
+//        val bmp = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+//        val canvas = Canvas(bmp)
+//        drawable.setBounds(0, 0, canvas.width, canvas.height)
+//        drawable.draw(canvas)
+//        return bmp
+//    }
+@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+private fun getBitmapFromVectorDrawable(drawable: VectorDrawable): Bitmap {
+    var vDrawable: VectorDrawable = drawable
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+        vDrawable = DrawableCompat.wrap(vDrawable).mutate() as VectorDrawable
+    }
+    val bitmap = Bitmap.createBitmap(vDrawable.intrinsicWidth,
+            vDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    vDrawable.setBounds(0, 0, canvas.width, canvas.height)
+    vDrawable.draw(canvas)
+    return bitmap
+}
+
     private fun getBitmapFromDrawable(drawable: Drawable): Bitmap {
-        val bmp = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bmp)
+//        var bitmap: Bitmap? = null
+        if (drawable is BitmapDrawable) {
+            val bitmapDrawable = drawable
+            if (bitmapDrawable.bitmap != null) {
+                return bitmapDrawable.bitmap
+            }
+        }
+        val bitmap: Bitmap  = if (drawable.intrinsicWidth <= 0 || drawable.intrinsicHeight <= 0) {
+            Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888) // Single color bitmap will be created of 1x1 pixel
+        } else {
+            Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        }
+        val canvas = Canvas(bitmap)
         drawable.setBounds(0, 0, canvas.width, canvas.height)
         drawable.draw(canvas)
-        return bmp
+        return bitmap
     }
 
-    private fun getApplicationInfo(packageName: String, result: MethodChannel.Result){
+    private fun getApplicationInfo(packageName: String, result: MethodChannel.Result) {
         val pkManager = activity.applicationContext.packageManager
         try {
             val map = getApplicationMap(packageName, pkManager)
@@ -217,18 +250,19 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
             val drawable: Drawable = pkManager.getApplicationIcon(packageName)
             val icon: HashMap<String, ByteArray> = getIcon(drawable)
             result.success(icon)
-        } catch (e: PackageManager.NameNotFoundException){
+        } catch (e: PackageManager.NameNotFoundException) {
             result.error("No_Such_App_Found", "App with $packageName does not exist", null)
         }
     }
 
     private fun getIcon(icon: Drawable): HashMap<String, ByteArray> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             getAdaptiveIcon(icon)
         } else {
             getRegularIcon(icon)
         }
     }
+
     /** Platform method to obtain icon of package for Android build version lower than 26.
      */
     private fun getRegularIcon(icon: Drawable): HashMap<String, ByteArray> {
@@ -244,8 +278,11 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
     @RequiresApi(Build.VERSION_CODES.O)
     private fun getAdaptiveIcon(icon: Drawable): HashMap<String, ByteArray> {
         val iconMap = HashMap<String, ByteArray>()
-        if (icon is BitmapDrawable){
-            iconMap["iconData"] = convertToBytes(icon.getBitmap(),Bitmap.CompressFormat.PNG, 100)
+        if (icon is BitmapDrawable) {
+            iconMap["iconData"] = convertToBytes(getBitmapFromDrawable(icon), Bitmap.CompressFormat.PNG, 100)
+            return iconMap
+        } else if (icon is VectorDrawable){
+            iconMap["iconData"] = convertToBytes(getBitmapFromVectorDrawable(icon), Bitmap.CompressFormat.PNG, 100)
             return iconMap
         }
         val backgroundDr: Drawable = (icon as AdaptiveIconDrawable).getBackground()
@@ -282,10 +319,8 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
     /** Get all installed application from [PackageManager] as a map to [MethodChannel]
      */
     private fun getAllApps(result: MethodChannel.Result) {
-
         val intent = Intent(Intent.ACTION_MAIN, null)
         intent.addCategory(Intent.CATEGORY_LAUNCHER)
-
         val manager = registrar.context().getPackageManager()
         val resList = manager.queryIntentActivities(intent, 0)
 
