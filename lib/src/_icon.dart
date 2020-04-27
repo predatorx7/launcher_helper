@@ -22,7 +22,7 @@ class AppIcon extends StatelessWidget {
   factory AppIcon.fromMap(Map<dynamic, dynamic> iconMap) {
     final Uint8List iconForegroundData =
         iconMap['iconData'] ?? iconMap['iconForegroundData'];
-    final Uint8List iconBackgroundData = iconMap['iconBackgroundData'] ?? null;
+    final Uint8List iconBackgroundData = iconMap['iconBackgroundData'];
     if (iconBackgroundData != null) {
       return AppIcon._(
         foreground: iconForegroundData,
@@ -33,62 +33,14 @@ class AppIcon extends StatelessWidget {
     }
   }
 
-  /// The widget below this widget in the tree.
-  ///
-  /// Typically a [Text] widget. If the [AppIcon] is to have an image, use
-  /// [background] instead.
   final Uint8List foreground;
 
-  /// The background image of the circle. Changing the background
-  /// image will cause the avatar to animate to the new image.
-  ///
-  /// If the [AppIcon] is to have the user's initials, use [foreground] instead.
   final Uint8List background;
 
-  /// The size of the avatar, expressed as the radius (half the diameter).
-  ///
-  /// If [radius] is specified, then neither [minRadius] nor [maxRadius] may be
-  /// specified. Specifying [radius] is equivalent to specifying a [minRadius]
-  /// and [maxRadius], both with the value of [radius].
-  ///
-  /// If neither [minRadius] nor [maxRadius] are specified, defaults to 20
-  /// logical pixels. This is the appropriate size for use with
-  /// [ListTile.leading].
-  ///
-  /// Changes to the [radius] are animated (including changing from an explicit
-  /// [radius] to a [minRadius]/[maxRadius] pair or vice versa).
   final double radius;
 
-  /// The minimum size of the avatar, expressed as the radius (half the
-  /// diameter).
-  ///
-  /// If [minRadius] is specified, then [radius] must not also be specified.
-  ///
-  /// Defaults to zero.
-  ///
-  /// Constraint changes are animated, but size changes due to the environment
-  /// itself changing are not. For example, changing the [minRadius] from 10 to
-  /// 20 when the [AppIcon] is in an unconstrained environment will cause
-  /// the avatar to animate from a 20 pixel diameter to a 40 pixel diameter.
-  /// However, if the [minRadius] is 40 and the [AppIcon] has a parent
-  /// [SizedBox] whose size changes instantaneously from 20 pixels to 40 pixels,
-  /// the size will snap to 40 pixels instantly.
   final double minRadius;
 
-  /// The maximum size of the avatar, expressed as the radius (half the
-  /// diameter).
-  ///
-  /// If [maxRadius] is specified, then [radius] must not also be specified.
-  ///
-  /// Defaults to [double.infinity].
-  ///
-  /// Constraint changes are animated, but size changes due to the environment
-  /// itself changing are not. For example, changing the [maxRadius] from 10 to
-  /// 20 when the [AppIcon] is in an unconstrained environment will cause
-  /// the avatar to animate from a 20 pixel diameter to a 40 pixel diameter.
-  /// However, if the [maxRadius] is 40 and the [AppIcon] has a parent
-  /// [SizedBox] whose size changes instantaneously from 20 pixels to 40 pixels,
-  /// the size will snap to 40 pixels instantly.
   final double maxRadius;
 
   // The default radius if nothing is specified.
@@ -119,15 +71,11 @@ class AppIcon extends StatelessWidget {
     assert(debugCheckHasMediaQuery(context));
     final double minDiameter = _minDiameter;
     final double maxDiameter = _maxDiameter;
+    List<Widget> iconLayerStack = [Image.memory(foreground)];
+    if (background != null) iconLayerStack.insert(0, Image.memory(background));
     Widget child = Stack(
       alignment: Alignment.center,
-      children: <Widget>[
-        Visibility(
-          visible: background?.isNotEmpty ?? false,
-          child: Image.memory(background),
-        ),
-        Image.memory(foreground),
-      ],
+      children: iconLayerStack,
     );
     return AnimatedContainer(
       constraints: BoxConstraints(

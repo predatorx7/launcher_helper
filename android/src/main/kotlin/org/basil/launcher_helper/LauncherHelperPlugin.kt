@@ -172,26 +172,19 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
             registrar.context().startActivity(i)
     }
 
-//    private fun getBitmapFromDrawable(drawable: Drawable): Bitmap {
-//        val bmp = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
-//        val canvas = Canvas(bmp)
-//        drawable.setBounds(0, 0, canvas.width, canvas.height)
-//        drawable.draw(canvas)
-//        return bmp
-//    }
-@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-private fun getBitmapFromVectorDrawable(drawable: VectorDrawable): Bitmap {
-    var vDrawable: VectorDrawable = drawable
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-        vDrawable = DrawableCompat.wrap(vDrawable).mutate() as VectorDrawable
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    private fun getBitmapFromVectorDrawable(drawable: VectorDrawable): Bitmap {
+        var vDrawable: VectorDrawable = drawable
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            vDrawable = DrawableCompat.wrap(vDrawable).mutate() as VectorDrawable
+        }
+        val bitmap = Bitmap.createBitmap(vDrawable.intrinsicWidth,
+                vDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        vDrawable.setBounds(0, 0, canvas.width, canvas.height)
+        vDrawable.draw(canvas)
+        return bitmap
     }
-    val bitmap = Bitmap.createBitmap(vDrawable.intrinsicWidth,
-            vDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    vDrawable.setBounds(0, 0, canvas.width, canvas.height)
-    vDrawable.draw(canvas)
-    return bitmap
-}
 
     private fun getBitmapFromDrawable(drawable: Drawable): Bitmap {
 //        var bitmap: Bitmap? = null
@@ -201,7 +194,7 @@ private fun getBitmapFromVectorDrawable(drawable: VectorDrawable): Bitmap {
                 return bitmapDrawable.bitmap
             }
         }
-        val bitmap: Bitmap  = if (drawable.intrinsicWidth <= 0 || drawable.intrinsicHeight <= 0) {
+        val bitmap: Bitmap = if (drawable.intrinsicWidth <= 0 || drawable.intrinsicHeight <= 0) {
             Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888) // Single color bitmap will be created of 1x1 pixel
         } else {
             Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
@@ -256,14 +249,21 @@ private fun getBitmapFromVectorDrawable(drawable: VectorDrawable): Bitmap {
     }
 
     private fun getIcon(icon: Drawable): HashMap<String, ByteArray> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            getAdaptiveIcon(icon)
-        } else {
-            getRegularIcon(icon)
+        return when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> {
+                getIconForAndroid26(icon)
+            }
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP -> {
+                getIconForAndroid21(icon)
+            }
+            else -> {
+                getRegularIcon(icon)
+            }
         }
     }
 
-    /** Platform method to obtain icon of package for Android build version lower than 26.
+    /** Platform method to obtain icon of package for Android.
+     *  Returns HashMap as {'iconData': <ByteArray>}
      */
     private fun getRegularIcon(icon: Drawable): HashMap<String, ByteArray> {
         val map = HashMap<String, ByteArray>()
@@ -274,19 +274,20 @@ private fun getBitmapFromVectorDrawable(drawable: VectorDrawable): Bitmap {
     }
 
     /** Platform method to obtain adaptive-icon of package for Android build version 26 & above.
+     * Returns HashMap as {'iconData': <ByteArray>} or {'iconForegroundData':<ByteArray>,'iconBackgroundData':<ByteArray>}
      */
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun getAdaptiveIcon(icon: Drawable): HashMap<String, ByteArray> {
+    private fun getIconForAndroid26(icon: Drawable): HashMap<String, ByteArray> {
         val iconMap = HashMap<String, ByteArray>()
-        if (icon is BitmapDrawable) {
+        if (icon is BitmapDrawable && icon !is AdaptiveIconDrawable) {
             iconMap["iconData"] = convertToBytes(getBitmapFromDrawable(icon), Bitmap.CompressFormat.PNG, 100)
             return iconMap
-        } else if (icon is VectorDrawable){
+        } else if (icon is VectorDrawable) {
             iconMap["iconData"] = convertToBytes(getBitmapFromVectorDrawable(icon), Bitmap.CompressFormat.PNG, 100)
             return iconMap
         }
-        val backgroundDr: Drawable = (icon as AdaptiveIconDrawable).getBackground()
-        val foregroundDr: Drawable = (icon as AdaptiveIconDrawable).getForeground()
+        val backgroundDr: Drawable = (icon as AdaptiveIconDrawable).background
+        val foregroundDr: Drawable = (icon as AdaptiveIconDrawable).foreground
         val iconForegroundData: ByteArray
         val iconBackgroundData: ByteArray
         iconForegroundData = convertToBytes(getBitmapFromDrawable(foregroundDr),
@@ -295,6 +296,20 @@ private fun getBitmapFromVectorDrawable(drawable: VectorDrawable): Bitmap {
                 Bitmap.CompressFormat.PNG, 100)
         iconMap["iconForegroundData"] = iconForegroundData
         iconMap["iconBackgroundData"] = iconBackgroundData
+        return iconMap
+    }
+
+    /** Platform method to obtain adaptive-icon of package for Android build version 26 & above.
+     * Returns HashMap as {'iconData': <ByteArray>}
+     */
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    private fun getIconForAndroid21(icon: Drawable): HashMap<String, ByteArray> {
+        val iconMap = HashMap<String, ByteArray>()
+        iconMap["iconData"] = if (icon is VectorDrawable) {
+            convertToBytes(getBitmapFromVectorDrawable(icon), Bitmap.CompressFormat.PNG, 100)
+        } else {
+            convertToBytes(getBitmapFromDrawable(icon), Bitmap.CompressFormat.PNG, 100)
+        }
         return iconMap
     }
 
@@ -323,21 +338,19 @@ private fun getBitmapFromVectorDrawable(drawable: VectorDrawable): Bitmap {
         intent.addCategory(Intent.CATEGORY_LAUNCHER)
         val manager = registrar.context().getPackageManager()
         val resList = manager.queryIntentActivities(intent, 0)
-
-        val _output = ArrayList<Map<String, Any>>()
-
+        val outputMap = ArrayList<Map<String, Any>>()
         for (resInfo in resList) {
             try {
                 val app = manager.getApplicationInfo(
                         resInfo.activityInfo.packageName, PackageManager.GET_META_DATA)
                 if (manager.getLaunchIntentForPackage(app.packageName) != null) {
                     val current = getApplicationMap(app.packageName, manager)
-                    _output.add(current)
+                    outputMap.add(current)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
-        result.success(_output)
+        result.success(outputMap)
     }
 }

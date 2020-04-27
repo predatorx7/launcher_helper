@@ -6,6 +6,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'application_collection.dart';
@@ -28,18 +29,22 @@ import 'palette_generator.dart';
 /// - [generatePalette] generates color palettes from `Uint8List` image data using [PaletteGenerator].
 class LauncherHelper {
   static const MethodChannel _channel = const MethodChannel('launcher_helper');
+  static Future<ApplicationCollection> getApplications() async {
+    return await applicationCollection;
+  }
 
   /// Returns [ApplicationCollection] of [Application]s installed on this device.
-  static Future<ApplicationCollection> get getApplications async {
+  static Future<ApplicationCollection> get applicationCollection async {
     List data = await _channel.invokeMethod('getAllApps');
-    return ApplicationCollection.fromList(data);
+    return compute<List, ApplicationCollection>(
+        _createApplicationCollection, data);
   }
 
   /// Returns [Application] matching with provided `packageName` installed on this device. Throws "No_Such_App_Found" exception if app doesn't exists.
   static Future<Application> getApplicationInfo(String packageName) async {
     Map data = await _channel
         .invokeMethod('getApplicationInfo', {"packageName": packageName});
-    return Application.fromMap(data);
+    return compute<Map, Application>(_createApplication, data);
   }
 
   /// Returns true if application exists else false if it doesn't exist. Throws "No_Such_App_Found" exception if app doesn't exists.
@@ -61,7 +66,8 @@ class LauncherHelper {
   /// ```
   /// {'iconData':<Uint8List> ?? null, 'iconForegroundData':<Uint8List> ?? null,'iconBackgroundData':<Uint8List> ?? null}
   /// ```
-  static Future<Map<String, dynamic>> getApplicationIcon(String packageName) async {
+  static Future<Map<String, dynamic>> getApplicationIcon(
+      String packageName) async {
     Map<String, dynamic> data = await _channel
         .invokeMethod('getIconOfPackage', {"packageName": packageName});
     return data;
@@ -111,4 +117,12 @@ class LauncherHelper {
     _palette = await PaletteGenerator.fromUint8List(imageData);
     return _palette;
   }
+}
+
+Application _createApplication(Map map) {
+  return Application.fromMap(map);
+}
+
+ApplicationCollection _createApplicationCollection(List list) {
+  return ApplicationCollection.fromList(list);
 }

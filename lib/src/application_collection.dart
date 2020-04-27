@@ -2,8 +2,6 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
-import 'dart:convert';
-import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:launcher_helper/launcher_helper.dart';
@@ -21,11 +19,7 @@ class ApplicationCollection {
   ApplicationCollection.fromList(List appList) {
     this._apps = [];
     for (var appData in appList) {
-      Application appInfo = Application(
-        label: appData["label"] as String,
-        packageName: appData["packageName"] as String,
-        icon: appData['icon'],
-      );
+      Application appInfo = Application.fromMap(appData);
       this._apps.add(appInfo);
     }
   }
@@ -105,7 +99,7 @@ class Application {
 
   Uint8List get iconForeground =>
       this._iconDataMap[_iconFg] ?? this._iconDataMap[_iconDat];
-  Uint8List get iconBackground => this._iconDataMap[_iconBg] ?? null;
+  Uint8List get iconBackground => this._iconDataMap[_iconBg];
 
   /// Creates a flutter Image widget from obtained iconData [Uint8List]
   AppIcon getAppIcon() {

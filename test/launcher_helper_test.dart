@@ -35,7 +35,7 @@ void main() {
   test('get Applications check', () async {
     // expect(await LauncherHelper.getWallpaperBrightness(skipPixel: 3), 170);
     expect(
-        await LauncherHelper.getApplications.then((x) {
+        await LauncherHelper.getApplications().then((x) {
           print(x);
           return [];
         }),

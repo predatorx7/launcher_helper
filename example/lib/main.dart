@@ -99,19 +99,20 @@ class _ShowCaseState extends State<ShowCase> {
           ),
           ListTile(
             title: Text("For Device applications"),
-            onTap: () async {
+            onTap: () {
               // Platform messages may fail, so we use a try/catch PlatformException.
               try {
                 // Get all apps
-                ApplicationCollection apps =
-                    await LauncherHelper.getApplications;
-                // Do something
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => AppListPage(
-                      appList: apps,
-                    ),
-                  ),
+                LauncherHelper.getApplications().then(
+                  (ApplicationCollection apps) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => AppListPage(
+                          appList: apps,
+                        ),
+                      ),
+                    );
+                  },
                 );
               } on PlatformException {
                 String message = 'Failed to get apps';
@@ -252,11 +253,7 @@ class AppListPage extends StatelessWidget {
               // LauncherHelper.launchApp(app.packageName);
               return customDialogBox(app, context);
             },
-            leading: Container(
-              height: 50,
-              width: 50,
-              child: app.getAppIcon()
-            ),
+            leading: Container(height: 50, width: 50, child: app.getAppIcon()),
             title: Text(
               app.label,
             ),
@@ -271,7 +268,7 @@ class AppListPage extends StatelessWidget {
 }
 
 Future customDialogBox(Application app, BuildContext context) async {
-  await app.update();
+  // await app.update(); // No need to update
   bool isEnabled, doesExist;
   try {
     isEnabled = await LauncherHelper.isApplicationEnabled(app.packageName);
@@ -294,9 +291,8 @@ Future customDialogBox(Application app, BuildContext context) async {
               new Row(
                 children: <Widget>[
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: app.getAppIcon()
-                  ),
+                      padding: const EdgeInsets.all(8.0),
+                      child: app.getAppIcon()),
                   new Container(
                     child: new Text(
                       app.label,
