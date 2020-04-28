@@ -5,7 +5,13 @@
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart'
-    show FutureBuilder, BuildContext, SizedBox, Widget, AsyncSnapshot;
+    show
+        AsyncSnapshot,
+        BoxDecoration,
+        BuildContext,
+        FutureBuilder,
+        SizedBox,
+        Widget;
 import 'package:launcher_helper/launcher_helper.dart';
 import '_icon.dart';
 import 'palette_generator.dart';
@@ -104,10 +110,10 @@ class Application {
   Uint8List get iconBackground => this._iconDataMap[_iconBg];
 
   /// Creates a flutter Image widget from obtained iconData [Uint8List]
-  Widget getAppIcon() {
+  FutureBuilder<AppIcon> getAppIcon() {
     return FutureBuilder(
-      future: Icon.getIcon(_iconDataMap),
-      builder: (BuildContext context, AsyncSnapshot<Icon> asyncFuture) {
+      future: AppIcon.getIcon(_iconDataMap),
+      builder: (BuildContext context, AsyncSnapshot<AppIcon> asyncFuture) {
         if (asyncFuture.hasData) {
           return asyncFuture.data;
         }
@@ -116,13 +122,13 @@ class Application {
     );
   }
 
-  Future<Widget> getAppIconAsync() async {
-    return Icon.getIcon(_iconDataMap);
+  Future<AppIcon> getAppIconAsync({BoxDecoration decoration}) async {
+    return AppIcon.getIcon(_iconDataMap);
   }
 
   /// Returns palette of colors generated from this [Application]'s [_iconDataMap] for use in UI.
   Future<PaletteGenerator> getIconPalette() async {
-    return await PaletteGenerator.fromUint8List(this.iconForeground);
+    return await PaletteUtils.fromUint8List(this.iconForeground);
   }
 
   /// It updates [Application] information using [Launcher.getApplicationInfo].

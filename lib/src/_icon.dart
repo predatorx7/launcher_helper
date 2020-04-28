@@ -23,21 +23,29 @@ class Layer extends StatelessWidget {
 
   /// Creates a background layer widget
   static Future<Layer> background(Uint8List bytes) async {
-    var palette = await PaletteGenerator.fromUint8List(bytes);
+    var palette = await PaletteUtils.fromUint8List(bytes);
     var colors = palette?.colors;
     if ((colors?.length ?? 0) > 1) {
-      return Layer._image(Image.memory(
-        bytes,
-        fit: BoxFit.fitWidth,
-      ));
+      return Layer._image(
+        Image.memory(
+          bytes,
+          fit: BoxFit.fitWidth,
+        ),
+      );
     } else if (colors != null) {
-      // Inflate Layer with 1 color if only 1 color in bytes is present
-      if(colors.isEmpty){
-        return Layer._transparent();
+      if (colors.isEmpty) {
+        int brightness = await LauncherHelper.calculateBrightness(bytes);
+        if (brightness == 0) {
+          return Layer._mono(Colors.black);
+        }
+        return Layer._mono(Colors.white);
       }
+      // Inflate Layer with 1 color if only 1 color in bytes is present
       return Layer._mono(colors.first);
     } else {
-      return Layer._transparent();
+      return Layer._mono(
+        Colors.black,
+      );
     }
   }
 
@@ -55,8 +63,8 @@ class Layer extends StatelessWidget {
   }
 }
 
-abstract class Icon extends StatelessWidget {
-  Icon({this.radius, this.minRadius, this.maxRadius});
+abstract class AppIcon extends StatelessWidget {
+  AppIcon({this.radius, this.minRadius, this.maxRadius});
 
   Widget get icon;
 
@@ -89,14 +97,19 @@ abstract class Icon extends StatelessWidget {
     return 2.0 * (radius ?? maxRadius ?? _defaultMaxRadius);
   }
 
-  static Future<Icon> getIcon(Map iconMap) async {
+  static Future<AppIcon> getIcon(
+    Map iconMap,
+  ) async {
     final Uint8List iconData = iconMap['iconData'];
     if (iconData == null) {
       final Uint8List iconForegroundData = iconMap['iconForegroundData'];
       final Uint8List iconBackgroundData = iconMap['iconBackgroundData'];
       Layer foregroundLayer = Layer.foreground(iconForegroundData);
       Layer backgroundLayer = await Layer.background(iconBackgroundData);
-      return AdaptableIcon(foregroundLayer, backgroundLayer);
+      return AdaptableIcon(
+        foregroundLayer,
+        backgroundLayer,
+      );
     } else {
       Layer iconLayer = Layer.foreground(iconData);
       return RegularIcon(iconLayer);
@@ -104,8 +117,9 @@ abstract class Icon extends StatelessWidget {
   }
 }
 
-class RegularIcon extends Icon {
+class RegularIcon extends AppIcon {
   final Widget _icon;
+
   RegularIcon(Layer icon, {double radius, double minRadius, double maxRadius})
       : this._icon = icon,
         super(radius: radius, minRadius: minRadius, maxRadius: maxRadius);
@@ -130,7 +144,7 @@ class RegularIcon extends Icon {
   Widget get icon => _icon;
 }
 
-class AdaptableIcon extends Icon {
+class AdaptableIcon extends AppIcon {
   final Widget _stack;
   final Layer foreground;
   final Layer background;

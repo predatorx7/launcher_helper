@@ -293,6 +293,7 @@ Future customDialogBox(Application app, BuildContext context) async {
   return showDialog(
     context: context,
     builder: (BuildContext context) {
+      final appIcon = app.getAppIcon();
       return AlertDialog(
         content: new Container(
           child: new Column(
@@ -304,7 +305,10 @@ Future customDialogBox(Application app, BuildContext context) async {
                 children: <Widget>[
                   Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: app.getAppIcon()),
+                      child: ClipRRect(
+                        child: appIcon,
+                        borderRadius: BorderRadius.circular(20),
+                      )),
                   new Container(
                     child: new Text(
                       app.label,
@@ -316,24 +320,34 @@ Future customDialogBox(Application app, BuildContext context) async {
                   ),
                 ],
               ),
-              new Row(
-                children: <Widget>[
-                  app.iconForeground == null
-                      ? null
-                      : Container(
-                          constraints: BoxConstraints.tight(Size(50, 50)),
-                          padding: const EdgeInsets.all(8.0),
-                          child: Image.memory(app.iconForeground),
-                        ),
-                  app.iconBackground == null
-                      ? null
-                      : Container(
-                          constraints: BoxConstraints.tight(Size(50, 50)),
-                          padding: const EdgeInsets.all(8.0),
-                          child: Image.memory(app.iconBackground),
-                        ),
-                ],
-              ),
+              FutureBuilder(
+                  future: app.getAppIconAsync(),
+                  builder: (context, AsyncSnapshot<AppIcon> snapshot) {
+                    if (snapshot.hasData && snapshot.data is AdaptableIcon)
+                      return Row(
+                        children: <Widget>[
+                          app.iconForeground == null
+                              ? null
+                              : Container(
+                                  constraints:
+                                      BoxConstraints.tight(Size(50, 50)),
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: (snapshot.data as AdaptableIcon)
+                                      .foreground,
+                                ),
+                          app.iconBackground == null
+                              ? null
+                              : Container(
+                                  constraints:
+                                      BoxConstraints.tight(Size(50, 50)),
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: (snapshot.data as AdaptableIcon)
+                                      .background,
+                                ),
+                        ],
+                      );
+                    return SizedBox();
+                  }),
               // dialog centre
               new Container(
                 child: Text(app.packageName),

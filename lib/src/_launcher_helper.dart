@@ -114,7 +114,7 @@ class LauncherHelper {
   /// It returns a [PaletteGenerator] based on image (preferably wallpaper) to for use in UI colors.
   static Future<PaletteGenerator> generatePalette(Uint8List imageData) async {
     PaletteGenerator _palette;
-    _palette = await PaletteGenerator.fromUint8List(imageData);
+    _palette = await PaletteUtils.fromUint8List(imageData);
     return _palette;
   }
 }
