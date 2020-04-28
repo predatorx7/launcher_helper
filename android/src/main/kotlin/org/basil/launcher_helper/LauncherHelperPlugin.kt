@@ -249,6 +249,7 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
     }
 
     private fun getIcon(icon: Drawable): HashMap<String, ByteArray> {
+//        return getRegularIcon(icon)
         return when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> {
                 getIconForAndroid26(icon)
@@ -279,11 +280,12 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
     @RequiresApi(Build.VERSION_CODES.O)
     private fun getIconForAndroid26(icon: Drawable): HashMap<String, ByteArray> {
         val iconMap = HashMap<String, ByteArray>()
-        if (icon is BitmapDrawable && icon !is AdaptiveIconDrawable) {
+        if (icon is BitmapDrawable) {
             iconMap["iconData"] = convertToBytes(getBitmapFromDrawable(icon), Bitmap.CompressFormat.PNG, 100)
             return iconMap
         } else if (icon is VectorDrawable) {
-            iconMap["iconData"] = convertToBytes(getBitmapFromVectorDrawable(icon), Bitmap.CompressFormat.PNG, 100)
+            iconMap["iconData"] = convertToBytes(getBitmapFromDrawable(icon)
+                    , Bitmap.CompressFormat.PNG, 100)
             return iconMap
         }
         val backgroundDr: Drawable = (icon as AdaptiveIconDrawable).background

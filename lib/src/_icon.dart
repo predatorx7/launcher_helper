@@ -1,41 +1,64 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
-/// A Widget icon that represents an App.
-class AppIcon extends StatelessWidget {
-  /// Creates a Widget icon that represents an App.
-  const AppIcon._({
-    Key key,
-    @required this.foreground,
-    this.background,
-    this.radius,
-    this.minRadius,
-    this.maxRadius,
-  })  : assert(radius == null || (minRadius == null && maxRadius == null)),
-        super(key: key);
+import '../launcher_helper.dart';
 
-  factory AppIcon.fromMap(Map<dynamic, dynamic> iconMap) {
-    final Uint8List iconForegroundData =
-        iconMap['iconData'] ?? iconMap['iconForegroundData'];
-    final Uint8List iconBackgroundData = iconMap['iconBackgroundData'];
-    if (iconBackgroundData != null) {
-      return AppIcon._(
-        foreground: iconForegroundData,
-        background: iconBackgroundData,
-      );
+class Layer extends StatelessWidget {
+  final Widget layer;
+
+  /// A Transparent layer
+  Layer._transparent() : layer = SizedBox();
+
+  /// Layer with only 1 color
+  Layer._mono(Color color)
+      : layer = Container(
+          color: color,
+        );
+
+  /// Layer which is an Image
+  Layer._image(Image memoryImage) : layer = memoryImage;
+
+  /// Creates a background layer widget
+  static Future<Layer> background(Uint8List bytes) async {
+    var palette = await PaletteGenerator.fromUint8List(bytes);
+    var colors = palette?.colors;
+    if ((colors?.length ?? 0) > 1) {
+      return Layer._image(Image.memory(
+        bytes,
+        fit: BoxFit.fitWidth,
+      ));
+    } else if (colors != null) {
+      // Inflate Layer with 1 color if only 1 color in bytes is present
+      if(colors.isEmpty){
+        return Layer._transparent();
+      }
+      return Layer._mono(colors.first);
     } else {
-      return AppIcon._(foreground: iconForegroundData);
+      return Layer._transparent();
     }
   }
 
-  final Uint8List foreground;
+  /// Creates a foreground layer widget
+  static Layer foreground(Uint8List bytes) {
+    return Layer._image(Image.memory(
+      bytes,
+      fit: BoxFit.fitWidth,
+    ));
+  }
 
-  final Uint8List background;
+  @override
+  Widget build(BuildContext context) {
+    return layer;
+  }
+}
+
+abstract class Icon extends StatelessWidget {
+  Icon({this.radius, this.minRadius, this.maxRadius});
+
+  Widget get icon;
 
   final double radius;
 
@@ -66,17 +89,31 @@ class AppIcon extends StatelessWidget {
     return 2.0 * (radius ?? maxRadius ?? _defaultMaxRadius);
   }
 
+  static Future<Icon> getIcon(Map iconMap) async {
+    final Uint8List iconData = iconMap['iconData'];
+    if (iconData == null) {
+      final Uint8List iconForegroundData = iconMap['iconForegroundData'];
+      final Uint8List iconBackgroundData = iconMap['iconBackgroundData'];
+      Layer foregroundLayer = Layer.foreground(iconForegroundData);
+      Layer backgroundLayer = await Layer.background(iconBackgroundData);
+      return AdaptableIcon(foregroundLayer, backgroundLayer);
+    } else {
+      Layer iconLayer = Layer.foreground(iconData);
+      return RegularIcon(iconLayer);
+    }
+  }
+}
+
+class RegularIcon extends Icon {
+  final Widget _icon;
+  RegularIcon(Layer icon, {double radius, double minRadius, double maxRadius})
+      : this._icon = icon,
+        super(radius: radius, minRadius: minRadius, maxRadius: maxRadius);
+
   @override
   Widget build(BuildContext context) {
-    assert(debugCheckHasMediaQuery(context));
     final double minDiameter = _minDiameter;
     final double maxDiameter = _maxDiameter;
-    List<Widget> iconLayerStack = [Image.memory(foreground)];
-    if (background != null) iconLayerStack.insert(0, Image.memory(background));
-    Widget child = Stack(
-      alignment: Alignment.center,
-      children: iconLayerStack,
-    );
     return AnimatedContainer(
       constraints: BoxConstraints(
         minHeight: minDiameter,
@@ -85,33 +122,47 @@ class AppIcon extends StatelessWidget {
         maxHeight: maxDiameter,
       ),
       duration: kThemeChangeDuration,
-      child: child,
+      child: icon,
     );
-    // return AnimatedContainer(
-    //   constraints: BoxConstraints(
-    //     minHeight: minDiameter,
-    //     minWidth: minDiameter,
-    //     maxWidth: maxDiameter,
-    //     maxHeight: maxDiameter,
-    //   ),
-    //   duration: kThemeChangeDuration,
-    //   decoration: BoxDecoration(
-    //     color: Colors.transparent,
-    //     image: background != null
-    //         ? DecorationImage(image: MemoryImage(background), fit: BoxFit.cover)
-    //         : null,
-    //     shape: BoxShape.circle,
-    //   ),
-    //   child: foreground == null
-    //       ? null
-    //       : Center(
-    //           child: MediaQuery(
-    //             // Need to ignore the ambient textScaleFactor here so that the
-    //             // text doesn't escape the avatar when the textScaleFactor is large.
-    //             data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-    //             child: Image.memory(foreground),
-    //           ),
-    //         ),
-    // );
   }
+
+  @override
+  Widget get icon => _icon;
+}
+
+class AdaptableIcon extends Icon {
+  final Widget _stack;
+  final Layer foreground;
+  final Layer background;
+  AdaptableIcon(Layer foreground, Layer background,
+      {double radius, double minRadius, double maxRadius})
+      : this.foreground = foreground,
+        this.background = background,
+        _stack = Stack(
+          alignment: Alignment.center,
+          children: <Layer>[
+            background,
+            foreground,
+          ],
+        ),
+        super(radius: radius, minRadius: minRadius, maxRadius: maxRadius);
+
+  @override
+  Widget build(BuildContext context) {
+    final double minDiameter = _minDiameter;
+    final double maxDiameter = _maxDiameter;
+    return AnimatedContainer(
+      constraints: BoxConstraints(
+        minHeight: minDiameter,
+        minWidth: minDiameter,
+        maxWidth: maxDiameter,
+        maxHeight: maxDiameter,
+      ),
+      duration: kThemeChangeDuration,
+      child: icon,
+    );
+  }
+
+  @override
+  Widget get icon => _stack;
 }

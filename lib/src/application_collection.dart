@@ -4,6 +4,8 @@
 
 import 'dart:typed_data';
 
+import 'package:flutter/widgets.dart'
+    show FutureBuilder, BuildContext, SizedBox, Widget, AsyncSnapshot;
 import 'package:launcher_helper/launcher_helper.dart';
 import '_icon.dart';
 import 'palette_generator.dart';
@@ -102,8 +104,20 @@ class Application {
   Uint8List get iconBackground => this._iconDataMap[_iconBg];
 
   /// Creates a flutter Image widget from obtained iconData [Uint8List]
-  AppIcon getAppIcon() {
-    return AppIcon.fromMap(_iconDataMap);
+  Widget getAppIcon() {
+    return FutureBuilder(
+      future: Icon.getIcon(_iconDataMap),
+      builder: (BuildContext context, AsyncSnapshot<Icon> asyncFuture) {
+        if (asyncFuture.hasData) {
+          return asyncFuture.data;
+        }
+        return SizedBox();
+      },
+    );
+  }
+
+  Future<Widget> getAppIconAsync() async {
+    return Icon.getIcon(_iconDataMap);
   }
 
   /// Returns palette of colors generated from this [Application]'s [_iconDataMap] for use in UI.

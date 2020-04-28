@@ -128,6 +128,7 @@ class _ShowCaseState extends State<ShowCase> {
 
 class ShowWallpaper extends StatefulWidget {
   final Uint8List imageData;
+
   const ShowWallpaper(this.imageData);
 
   @override
@@ -137,6 +138,7 @@ class ShowWallpaper extends StatefulWidget {
 class _ShowWallpaperState extends State<ShowWallpaper> {
   int brightness;
   double luminance, brightnessDart;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -182,6 +184,7 @@ class _ShowWallpaperState extends State<ShowWallpaper> {
 
 class ShowImage extends StatefulWidget {
   final Uint8List imageData;
+
   const ShowImage(this.imageData);
 
   @override
@@ -191,6 +194,7 @@ class ShowImage extends StatefulWidget {
 class _ShowImageState extends State<ShowImage> {
   int brightness;
   double luminance, brightnessDart;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -237,7 +241,9 @@ class _ShowImageState extends State<ShowImage> {
 
 class AppListPage extends StatelessWidget {
   final ApplicationCollection appList;
+
   AppListPage({this.appList});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -253,7 +259,11 @@ class AppListPage extends StatelessWidget {
               // LauncherHelper.launchApp(app.packageName);
               return customDialogBox(app, context);
             },
-            leading: Container(height: 50, width: 50, child: app.getAppIcon()),
+            leading: Container(
+              height: 50,
+              width: 50,
+              child: app.getAppIcon(),
+            ),
             title: Text(
               app.label,
             ),
@@ -277,7 +287,9 @@ Future customDialogBox(Application app, BuildContext context) async {
     print("Platform error");
   }
   var palette = await LauncherHelper.generatePalette(app.iconForeground);
-  Color dominantColor = palette.colors.first;
+  Color dominantColor = palette.colors.isNotEmpty
+      ? palette.colors.first ?? Colors.transparent
+      : Colors.transparent;
   return showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -304,7 +316,24 @@ Future customDialogBox(Application app, BuildContext context) async {
                   ),
                 ],
               ),
-
+              new Row(
+                children: <Widget>[
+                  app.iconForeground == null
+                      ? null
+                      : Container(
+                          constraints: BoxConstraints.tight(Size(50, 50)),
+                          padding: const EdgeInsets.all(8.0),
+                          child: Image.memory(app.iconForeground),
+                        ),
+                  app.iconBackground == null
+                      ? null
+                      : Container(
+                          constraints: BoxConstraints.tight(Size(50, 50)),
+                          padding: const EdgeInsets.all(8.0),
+                          child: Image.memory(app.iconBackground),
+                        ),
+                ],
+              ),
               // dialog centre
               new Container(
                 child: Text(app.packageName),
