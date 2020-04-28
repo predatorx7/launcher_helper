@@ -1,6 +1,6 @@
 name: launcher_helper
 description: To help create launcher, this plugin provides information of installed apps & wallpaper, and extract colors for making UI from wallpaper or icon.
-version: 0.4.0-dev.1
+version: 0.4.0-dev+1
 # author: Mushaheed Syed <smushaheed@gmail.com>
 homepage: https://github.com/predatorx7/launcher_helper
 

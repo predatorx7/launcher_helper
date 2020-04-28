@@ -28,8 +28,6 @@ dependencies:
     # git:
     #   url: git://github.com/predatorx7/launcher_helper.git
     #   ref: master
-  # has Issues
-  # launcher_assist: ^1.1.3
 
 dev_dependencies:
   flutter_test:

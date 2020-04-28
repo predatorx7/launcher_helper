@@ -1,9 +1,10 @@
 # Changelog
 
-## 0.4.0-dev.1
+## 0.4.0-dev+1
 
 - Getter for Adaptive icons of a package
 - ApplicationCollection to use isolates
+- API improvements
 
 ## 0.3.1
 

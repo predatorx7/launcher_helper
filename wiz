@@ -7,11 +7,12 @@ if [[ $1 == "publish" ]]; then
     version=$2
     version_msg=$3
     echo "preparing"
-    pub get
+    flutter pub get
+    printf "done\nformating..\n"
     flutter clean
     flutter format .
     git add -A
-    git commit -m $version_msg
+    git commit -m "${version_msg}"
     git tag -a v$version -m $version_msg
     echo "Pushing the version $version to the remote repository."
     git push --tags

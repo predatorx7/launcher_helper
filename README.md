@@ -1,13 +1,13 @@
 # launcher_helper
 
-[![pub package](https://img.shields.io/pub/v/launcher_helper.svg)](
-https://pub.dartlang.org/packages/launcher_helper)
+[![pub package](https://img.shields.io/pub/v/launcher_helper.svg)](https://pub.dartlang.org/packages/launcher_helper)
 
 This plugin is made to help you when building a launcher for Android. `launcher_helper` is Androidx compatible.
 
 It offers the following features:
 
 - Getting list of installed applications with their icon and other details.
+- Support for Adaptive Icons
 - Launching application and getting phone's wallpaper.
 - Picking prominent colors from an image (wallpaper, icon, etc) for use in UI, etc.
 
@@ -23,6 +23,5 @@ Only Android is supported. Tested on android 10, pie and oreo.
 
 ## Note
 
-- If you are using __launcher_helper 0.1.1__ then you have to include `palette_generator` library in your project.
-- Plugin uses gradle version: 3.3.1 & kotlin version: 1.3.0
+- Plugin uses gradle version: 3.3.1 & kotlin version: 1.3.10
 - To get device wallpaper, app will need the READ_EXTERNAL_STORAGE permission on Android Oreo & above.
