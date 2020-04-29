@@ -1,5 +1,15 @@
 # Changelog
 
+## Upcoming
+
+- Better example
+- Documentation updates
+- API internal improvements
+- Icon-pack support
+- version semantic now will follow:
+  - `version + hotfixes` &nbsp;for stable builds.
+  - `version - pre-release + yymm` &nbsp;for any pre-release builds.
+
 ## 0.4.3-dev+202004300253
 
 - API changes
