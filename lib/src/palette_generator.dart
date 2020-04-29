@@ -34,7 +34,7 @@ extension PaletteUtils on PaletteGenerator {
   /// **Note**:
   /// - You can use `computeLuminance()` method of [dominantColor] of type `Color` obtained from
   /// generated Palette.
-  /// 
+  ///
   /// Warning: Can only be used on the Main UI thread. Don't use under isolates.
   static Future<PaletteGenerator> fromUint8List(
     Uint8List imageData, {

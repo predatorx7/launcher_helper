@@ -1,6 +1,7 @@
 import 'dart:io' as io;
 import 'dart:typed_data';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:launcher_helper/launcher_helper.dart';
 import 'package:flutter/services.dart';
@@ -247,6 +248,7 @@ class AppListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[400],
       appBar: AppBar(
         title: Text('Installed ${appList.length} Apps'),
       ),
@@ -254,21 +256,22 @@ class AppListPage extends StatelessWidget {
         itemCount: appList.length,
         itemBuilder: (BuildContext context, int index) {
           var app = appList.toList()[index];
-          return ListTile(
-            onTap: () {
-              // LauncherHelper.launchApp(app.packageName);
-              return customDialogBox(app, context);
-            },
-            leading: Container(
-              height: 50,
-              width: 50,
-              child: app.icon,
-            ),
-            title: Text(
-              app.label,
-            ),
-            subtitle: Text(
-              app.packageName,
+          return AppIconShape(
+            data: AppIconShapeData.squircle(),
+            child: ListTile(
+              onTap: () {
+                // LauncherHelper.launchApp(app.packageName);
+                return customDialogBox(app, context);
+              },
+              leading: Container(
+                child: app.icon,
+              ),
+              title: Text(
+                app.label,
+              ),
+              subtitle: Text(
+                app.packageName,
+              ),
             ),
           );
         },
@@ -293,7 +296,6 @@ Future customDialogBox(Application app, BuildContext context) async {
   return showDialog(
     context: context,
     builder: (BuildContext context) {
-      final appIcon = app.icon;
       return AlertDialog(
         content: new Container(
           child: new Column(
@@ -303,12 +305,21 @@ Future customDialogBox(Application app, BuildContext context) async {
               // dialog top
               new Row(
                 children: <Widget>[
-                  Padding(
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => IconShow(
+                            icon: app.icon,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
                       padding: const EdgeInsets.all(8.0),
-                      child: ClipRRect(
-                        child: appIcon,
-                        borderRadius: BorderRadius.circular(20),
-                      )),
+                      child: app.icon,
+                    ),
+                  ),
                   new Container(
                     child: new Text(
                       app.label,
@@ -328,7 +339,7 @@ Future customDialogBox(Application app, BuildContext context) async {
                     child: app.icon.foreground,
                   ),
                   !(app.icon is AdaptableIcon)
-                      ? null
+                      ? SizedBox()
                       : Container(
                           constraints: BoxConstraints.tight(Size(50, 50)),
                           padding: const EdgeInsets.all(8.0),
@@ -374,4 +385,31 @@ Future customDialogBox(Application app, BuildContext context) async {
       );
     },
   );
+}
+
+class IconShow extends StatefulWidget {
+  final AppIcon icon;
+
+  const IconShow({Key key, this.icon}) : super(key: key);
+  @override
+  _IconShowState createState() => _IconShowState();
+}
+
+class _IconShowState extends State<IconShow> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[400],
+      body: Center(
+        child: Container(
+          height: 100,
+          width: 100,
+          child: AppIconShape(
+            data: AppIconShapeData.teardrop(),
+            child: (widget.icon as AdaptableIcon).background,
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.3-dev+202004300253
+
+- API changes
+- AppIcon can change shape properly
+- AppIcon shape can be changed with AppIconShape
+- existing shapes: teardrop, squircle, circular, square
+- version semantic now will follow:
+  - `version + yyyymmddhhmm` &nbsp;for stable builds.
+  - `version - pre-release + yyyymmddhhmm` &nbsp;for any pre-release builds.
+
 ## 0.4.0-dev+2
 
 - API changes

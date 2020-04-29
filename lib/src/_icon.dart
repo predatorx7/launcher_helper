@@ -5,70 +5,131 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 import '../launcher_helper.dart';
+import '_icon_shape.dart';
 
 class IconLayer extends StatelessWidget {
   final Widget layer;
   final Uint8List bytes;
-
-  /// A Transparent layer
-  IconLayer._transparent(this.bytes) : layer = SizedBox();
+  final Color color;
+  final bool adaptable;
 
   /// Layer with only 1 color
-  IconLayer._mono(Color color, this.bytes)
+  IconLayer._colored(this.color, this.bytes, {this.adaptable = false})
       : layer = Container(
           color: color,
         );
 
   /// Layer which is an Image
-  IconLayer._image(Image memoryImage, this.bytes) : layer = memoryImage;
+  IconLayer._image(this.bytes, {this.adaptable = false})
+      : layer = Image.memory(bytes),
+        this.color = Colors.transparent;
+
+  IconLayer._(
+      {@required this.layer,
+      @required this.bytes,
+      @required this.color,
+      @required this.adaptable});
 
   /// Creates a background layer widget
   static Future<IconLayer> background(Uint8List bytes) async {
     var palette = await PaletteUtils.fromUint8List(bytes);
     var colors = palette?.colors;
     if ((colors?.length ?? 0) > 1) {
-      return IconLayer._image(
-          Image.memory(
-            bytes,
-            fit: BoxFit.fitWidth,
-          ),
-          bytes);
+      // Image has more than 1 color
+      return IconLayer._image(bytes, adaptable: true);
     } else if (colors != null) {
       if (colors.isEmpty) {
+        // Background color must be white or black
+        // TODO(predatorx7): Do synchronously on dart
         int brightness = await LauncherHelper.calculateBrightness(bytes);
         if (brightness == 0) {
-          return IconLayer._mono(Colors.black, bytes);
+          return IconLayer._colored(
+            Colors.black,
+            bytes,
+            adaptable: true,
+          );
         }
-        return IconLayer._mono(Colors.white, bytes);
+        return IconLayer._colored(
+          Colors.white,
+          bytes,
+          adaptable: true,
+        );
       }
-      // Inflate Layer with 1 color if only 1 color in bytes is present
-      return IconLayer._mono(colors.first, bytes);
+      // There is 1 color in the image.
+      // Creating Layer fill with 1 color as only 1 color in bytes is present
+      return IconLayer._colored(
+        colors.first,
+        bytes,
+        adaptable: true,
+      );
     } else {
-      return IconLayer._mono(Colors.black, bytes);
+      // Using fallback layer color as black
+      return IconLayer._colored(
+        Colors.black,
+        bytes,
+        adaptable: true,
+      );
     }
   }
 
   /// Creates a foreground layer widget
-  static IconLayer foreground(Uint8List bytes) {
+  static IconLayer foreground(Uint8List bytes, bool adaptable) {
     return IconLayer._image(
-        Image.memory(
-          bytes,
-          fit: BoxFit.fitWidth,
-        ),
-        bytes);
+      bytes,
+      adaptable: adaptable,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return layer;
+    final _borderRadius =
+        AppIconShape.of(context).borderRadius ?? BorderRadius.circular(0);
+    if (!adaptable) return layer;
+    BoxDecoration decoration = BoxDecoration(
+      borderRadius: _borderRadius,
+    );
+    double scale = AppIconShape.of(context).scale ?? defaultIconScale;
+    if (layer is Image) {
+      decoration = decoration.copyWith(
+        image: DecorationImage(
+          // Not scaling image as we need to add icon effects in future
+          image: MemoryImage(
+            bytes,
+          ),
+          fit: BoxFit.cover,
+        ),
+      );
+    } else {
+      decoration = decoration.copyWith(
+        color: this.color,
+      );
+    }
+    Widget child = Container(
+      decoration: decoration,
+    );
+    if (!(layer is Image)) {
+      // Layer doesn't need scaling & clipping
+      return child;
+    }
+    if (scale != 1.0) {
+      // Scaling and clipping image
+      // Image was scaled, hence needs clipping
+      return ClipRRect(
+        clipBehavior: AppIconShape.of(context).clipBehavior ?? Clip.hardEdge,
+        borderRadius: _borderRadius,
+        child: Transform.scale(
+          scale: scale,
+          child: child,
+        ),
+      );
+    }
+    return child;
   }
 }
 
 abstract class AppIcon extends StatelessWidget {
-  AppIcon({this.radius, this.minRadius, this.maxRadius});
-
   /// Returns a Layer in [RegularIcon]
-  /// Returns a Stack widget with [foreground] & [background] [IconLayer]s in [AdaptableIcon]s.
+  /// or a Stack widget with [foreground] & [background] [IconLayer]s in [AdaptableIcon]s.
   /// To get [IconLayer]s separately, consider using [foreground] in [RegularIcon] & [foreground] + [background]
   /// in [AdaptableIcon].
   /// for example:
@@ -80,38 +141,9 @@ abstract class AppIcon extends StatelessWidget {
   ///   (icon as AdaptableIcon).background
   /// }
   /// ```
-  Widget get icon;
+  Widget get widget;
 
   IconLayer get foreground;
-
-  final double radius;
-
-  final double minRadius;
-
-  final double maxRadius;
-
-  // The default radius if nothing is specified.
-  static const double _defaultRadius = 20.0;
-
-  // The default min if only the max is specified.
-  static const double _defaultMinRadius = 0.0;
-
-  // The default max if only the min is specified.
-  static const double _defaultMaxRadius = double.infinity;
-
-  double get _minDiameter {
-    if (radius == null && minRadius == null && maxRadius == null) {
-      return _defaultRadius * 2.0;
-    }
-    return 2.0 * (radius ?? minRadius ?? _defaultMinRadius);
-  }
-
-  double get _maxDiameter {
-    if (radius == null && minRadius == null && maxRadius == null) {
-      return _defaultRadius * 2.0;
-    }
-    return 2.0 * (radius ?? maxRadius ?? _defaultMaxRadius);
-  }
 
   static Future<AppIcon> getIcon(
     Map iconMap,
@@ -120,44 +152,39 @@ abstract class AppIcon extends StatelessWidget {
     if (iconData == null) {
       final Uint8List iconForegroundData = iconMap['iconForegroundData'];
       final Uint8List iconBackgroundData = iconMap['iconBackgroundData'];
-      IconLayer foregroundLayer = IconLayer.foreground(iconForegroundData);
-      IconLayer backgroundLayer = await IconLayer.background(iconBackgroundData);
+      IconLayer foregroundLayer =
+          IconLayer.foreground(iconForegroundData, true);
+      IconLayer backgroundLayer =
+          await IconLayer.background(iconBackgroundData);
       return AdaptableIcon(
         foregroundLayer,
         backgroundLayer,
       );
     } else {
-      IconLayer iconLayer = IconLayer.foreground(iconData);
+      IconLayer iconLayer = IconLayer.foreground(iconData, false);
       return RegularIcon(iconLayer);
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double radius = AppIconShape.of(context).radius ?? defaultIconRadius;
+    return ConstrainedBox(
+      constraints: BoxConstraints.tight(Size.fromRadius(radius)),
+      child: widget,
+    );
   }
 }
 
 class RegularIcon extends AppIcon {
   final Widget _icon;
 
-  RegularIcon(IconLayer icon, {double radius, double minRadius, double maxRadius})
-      : this._icon = icon,
-        super(radius: radius, minRadius: minRadius, maxRadius: maxRadius);
+  RegularIcon(IconLayer icon,
+      {double radius, double minRadius, double maxRadius})
+      : this._icon = icon;
 
   @override
-  Widget build(BuildContext context) {
-    final double minDiameter = _minDiameter;
-    final double maxDiameter = _maxDiameter;
-    return AnimatedContainer(
-      constraints: BoxConstraints(
-        minHeight: minDiameter,
-        minWidth: minDiameter,
-        maxWidth: maxDiameter,
-        maxHeight: maxDiameter,
-      ),
-      duration: kThemeChangeDuration,
-      child: icon,
-    );
-  }
-
-  @override
-  IconLayer get icon => _icon;
+  IconLayer get widget => _icon;
   @override
   IconLayer get foreground => _icon;
 }
@@ -178,25 +205,8 @@ class AdaptableIcon extends AppIcon {
             background,
             foreground,
           ],
-        ),
-        super(radius: radius, minRadius: minRadius, maxRadius: maxRadius);
+        );
 
   @override
-  Widget build(BuildContext context) {
-    final double minDiameter = _minDiameter;
-    final double maxDiameter = _maxDiameter;
-    return AnimatedContainer(
-      constraints: BoxConstraints(
-        minHeight: minDiameter,
-        minWidth: minDiameter,
-        maxWidth: maxDiameter,
-        maxHeight: maxDiameter,
-      ),
-      duration: kThemeChangeDuration,
-      child: icon,
-    );
-  }
-
-  @override
-  Widget get icon => _stack;
+  Widget get widget => _stack;
 }
