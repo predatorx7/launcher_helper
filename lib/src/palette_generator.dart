@@ -4,6 +4,7 @@
 
 import 'dart:typed_data';
 import 'dart:ui' show Rect;
+import 'dart:ui' as ui;
 import 'package:flutter/widgets.dart' show MemoryImage;
 import 'package:palette_generator/palette_generator.dart';
 export 'package:palette_generator/palette_generator.dart';
@@ -33,7 +34,29 @@ extension PaletteUtils on PaletteGenerator {
   /// **Note**:
   /// - You can use `computeLuminance()` method of [dominantColor] of type `Color` obtained from
   /// generated Palette.
+  /// 
+  /// Warning: Can only be used on the Main UI thread. Don't use under isolates.
   static Future<PaletteGenerator> fromUint8List(
+    Uint8List imageData, {
+    Rect region,
+    int maximumColorCount,
+    List<PaletteFilter> filters,
+    List<PaletteTarget> targets,
+  }) async {
+    assert(imageData != null);
+    ui.Codec imageCodec = await ui.instantiateImageCodec(imageData);
+    ui.FrameInfo imageFrame = await imageCodec.getNextFrame();
+    ui.Image image = imageFrame.image;
+    return await PaletteGenerator.fromImage(
+      image,
+      region: region,
+      maximumColorCount: maximumColorCount,
+      filters: filters,
+      targets: targets,
+    );
+  }
+
+  static Future<PaletteGenerator> _fromUint8List(
     Uint8List imageData, {
     Rect region,
     int maximumColorCount,

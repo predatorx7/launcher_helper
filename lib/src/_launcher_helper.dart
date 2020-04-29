@@ -34,17 +34,17 @@ class LauncherHelper {
   }
 
   /// Returns [ApplicationCollection] of [Application]s installed on this device.
+  /// This is an expensive operation
   static Future<ApplicationCollection> get applicationCollection async {
     List data = await _channel.invokeMethod('getAllApps');
-    return compute<List, ApplicationCollection>(
-        _createApplicationCollection, data);
+    return await _createApplicationCollection(data);
   }
 
   /// Returns [Application] matching with provided `packageName` installed on this device. Throws "No_Such_App_Found" exception if app doesn't exists.
   static Future<Application> getApplicationInfo(String packageName) async {
     Map data = await _channel
         .invokeMethod('getApplicationInfo', {"packageName": packageName});
-    return compute<Map, Application>(_createApplication, data);
+    return await _createApplication(data);
   }
 
   /// Returns true if application exists else false if it doesn't exist. Throws "No_Such_App_Found" exception if app doesn't exists.
@@ -119,10 +119,10 @@ class LauncherHelper {
   }
 }
 
-Application _createApplication(Map map) {
-  return Application.fromMap(map);
+Future<Application> _createApplication(Map map) async {
+  return await Application.create(map);
 }
 
-ApplicationCollection _createApplicationCollection(List list) {
-  return ApplicationCollection.fromList(list);
+Future<ApplicationCollection> _createApplicationCollection(List list) async {
+  return await ApplicationCollection.fromList(list);
 }

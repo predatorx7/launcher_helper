@@ -1,9 +1,15 @@
 # Changelog
 
+## 0.4.0-dev+2
+
+- API changes
+- Now [IconLayer] are available in AppIcon
+- [IconLayer] also provides Image bytes as Uint8List
+
 ## 0.4.0-dev+1
 
 - Getter for Adaptive icons of a package
-- ApplicationCollection to use isolates
+- changes in ApplicationCollection
 - API improvements
 
 ## 0.3.1
@@ -33,7 +39,7 @@
 - Can generate color palettes from an application icon or image.
 - Provided [Applications] to better use information from appinfo.
 - Calculate luminance/brightness of wallpaper or an image. Also has methods to
-determine brightness of wallpaper (or any other image) using dominant colors.
+  determine brightness of wallpaper (or any other image) using dominant colors.
 
 ## 0.1.1
 

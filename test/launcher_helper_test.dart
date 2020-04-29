@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:launcher_helper/launcher_helper.dart';
 
-String testAppRet() {
-  ApplicationCollection x = ApplicationCollection.fromList([
+Future<String> testAppRet() async {
+  ApplicationCollection x = await ApplicationCollection.fromList([
     {"label": "hello"},
     {"label": "dog"}
   ]);
@@ -41,10 +41,9 @@ void main() {
         }),
         []);
   });
-
-  test("Testing ApplicationCollection class", () {
+  test("Testing ApplicationCollection class", () async {
     testAppRet();
-    expect(testAppRet(), "dog");
+    expect(await testAppRet(), "dog");
   });
 
   String testImage = "https://example.com/image.png";

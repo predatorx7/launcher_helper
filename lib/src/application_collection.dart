@@ -4,17 +4,8 @@
 
 import 'dart:typed_data';
 
-import 'package:flutter/widgets.dart'
-    show
-        AsyncSnapshot,
-        BoxDecoration,
-        BuildContext,
-        FutureBuilder,
-        SizedBox,
-        Widget;
 import 'package:launcher_helper/launcher_helper.dart';
 import '_icon.dart';
-import 'palette_generator.dart';
 
 /// This [ApplicationCollection] is a List of [Application] (which has application information).
 ///
@@ -24,12 +15,17 @@ class ApplicationCollection {
   List<Application> _apps;
 
   /// This [ApplicationCollection] constructor generates a List of [Application] (which has application information) from List<Map> of Apps from MethodChannel.
-  ApplicationCollection.fromList(List appList) {
-    this._apps = [];
+  ApplicationCollection.fromApplications(List<Application> appList)
+      : this._apps = appList;
+
+  /// This [ApplicationCollection] constructor generates a List of [Application] (which has application information) from List<Map> of Apps from MethodChannel.
+  static Future<ApplicationCollection> fromList(List appList) async {
+    List<Application> _apps = [];
     for (var appData in appList) {
-      Application appInfo = Application.fromMap(appData);
-      this._apps.add(appInfo);
+      Application appInfo = await Application.create(appData);
+      _apps.add(appInfo);
     }
+    return ApplicationCollection.fromApplications(_apps);
   }
 
   /// Number of apps in list.
@@ -67,8 +63,9 @@ class Application {
   /// Application package name
   String packageName;
 
-  /// Application icon
-  Map<dynamic, dynamic> _iconDataMap;
+  AppIcon _icon;
+
+  AppIcon get icon => _icon;
 
   var _versionName;
 
@@ -81,61 +78,37 @@ class Application {
   get versionCode => _versionCode;
 
   /// Creates [Application] with
-  Application({String label, String packageName, Map<dynamic, dynamic> icon})
+  Application(
+      {String label,
+      String packageName,
+      dynamic versionCode,
+      dynamic versionName,
+      AppIcon icon})
       : this.label = label,
         this.packageName = packageName,
-        this._iconDataMap = icon;
+        this._versionCode = versionCode,
+        this._versionName = versionName,
+        this._icon = icon;
 
-  /// Creates [Application] from map
-  Application.fromMap(appData)
-      : this.label = appData["label"] ?? '',
-        this.packageName = appData["packageName"] ?? '',
-        this._iconDataMap = appData["icon"],
-        this._versionCode = appData["versionCode"] ?? '',
-        this._versionName = appData["versionName"] ?? '';
-
-  bool get isAdaptableIcon {
-    if (this._iconDataMap['iconBackgroundData'] == null) {
-      return false;
-    }
-    return true;
-  }
-
-  final String _iconDat = 'iconData';
-  final String _iconFg = 'iconForegroundData';
-  final String _iconBg = 'iconBackgroundData';
-
-  Uint8List get iconForeground =>
-      this._iconDataMap[_iconFg] ?? this._iconDataMap[_iconDat];
-  Uint8List get iconBackground => this._iconDataMap[_iconBg];
-
-  /// Creates a flutter Image widget from obtained iconData [Uint8List]
-  FutureBuilder<AppIcon> getAppIcon() {
-    return FutureBuilder(
-      future: AppIcon.getIcon(_iconDataMap),
-      builder: (BuildContext context, AsyncSnapshot<AppIcon> asyncFuture) {
-        if (asyncFuture.hasData) {
-          return asyncFuture.data;
-        }
-        return SizedBox();
-      },
+  /// Asynchronously creates [Application] from map
+  static Future<Application> create(Map applicationMap) async {
+    AppIcon icon = await AppIcon.getIcon(applicationMap['icon']);
+    return Application(
+      label: applicationMap["label"],
+      packageName: applicationMap['packageName'],
+      versionCode: applicationMap['versionCode'],
+      versionName: applicationMap['versionName'],
+      icon: icon,
     );
   }
 
-  Future<AppIcon> getAppIconAsync({BoxDecoration decoration}) async {
-    return AppIcon.getIcon(_iconDataMap);
-  }
-
-  /// Returns palette of colors generated from this [Application]'s [_iconDataMap] for use in UI.
-  Future<PaletteGenerator> getIconPalette() async {
-    return await PaletteUtils.fromUint8List(this.iconForeground);
-  }
+  bool get isAdaptableIcon => (this._icon is AdaptableIcon) ? true : false;
 
   /// It updates [Application] information using [Launcher.getApplicationInfo].
   Future update() async {
     Application appInfo =
         await LauncherHelper.getApplicationInfo(this.packageName);
-    this._iconDataMap = appInfo._iconDataMap;
+    this._icon = appInfo.icon;
     this.label = appInfo.label;
     this.packageName = appInfo.packageName;
     this._versionCode = appInfo.versionCode;

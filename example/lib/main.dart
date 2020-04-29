@@ -262,7 +262,7 @@ class AppListPage extends StatelessWidget {
             leading: Container(
               height: 50,
               width: 50,
-              child: app.getAppIcon(),
+              child: app.icon,
             ),
             title: Text(
               app.label,
@@ -286,14 +286,14 @@ Future customDialogBox(Application app, BuildContext context) async {
   } on PlatformException {
     print("Platform error");
   }
-  var palette = await LauncherHelper.generatePalette(app.iconForeground);
+  var palette = await LauncherHelper.generatePalette(app.icon.foreground.bytes);
   Color dominantColor = palette.colors.isNotEmpty
       ? palette.colors.first ?? Colors.transparent
       : Colors.transparent;
   return showDialog(
     context: context,
     builder: (BuildContext context) {
-      final appIcon = app.getAppIcon();
+      final appIcon = app.icon;
       return AlertDialog(
         content: new Container(
           child: new Column(
@@ -320,34 +320,22 @@ Future customDialogBox(Application app, BuildContext context) async {
                   ),
                 ],
               ),
-              FutureBuilder(
-                  future: app.getAppIconAsync(),
-                  builder: (context, AsyncSnapshot<AppIcon> snapshot) {
-                    if (snapshot.hasData && snapshot.data is AdaptableIcon)
-                      return Row(
-                        children: <Widget>[
-                          app.iconForeground == null
-                              ? null
-                              : Container(
-                                  constraints:
-                                      BoxConstraints.tight(Size(50, 50)),
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: (snapshot.data as AdaptableIcon)
-                                      .foreground,
-                                ),
-                          app.iconBackground == null
-                              ? null
-                              : Container(
-                                  constraints:
-                                      BoxConstraints.tight(Size(50, 50)),
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: (snapshot.data as AdaptableIcon)
-                                      .background,
-                                ),
-                        ],
-                      );
-                    return SizedBox();
-                  }),
+              Row(
+                children: <Widget>[
+                  Container(
+                    constraints: BoxConstraints.tight(Size(50, 50)),
+                    padding: const EdgeInsets.all(8.0),
+                    child: app.icon.foreground,
+                  ),
+                  !(app.icon is AdaptableIcon)
+                      ? null
+                      : Container(
+                          constraints: BoxConstraints.tight(Size(50, 50)),
+                          padding: const EdgeInsets.all(8.0),
+                          child: (app.icon as AdaptableIcon).background,
+                        ),
+                ],
+              ),
               // dialog centre
               new Container(
                 child: Text(app.packageName),

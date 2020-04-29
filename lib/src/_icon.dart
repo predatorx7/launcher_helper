@@ -6,55 +6,56 @@ import 'package:flutter/widgets.dart';
 
 import '../launcher_helper.dart';
 
-class Layer extends StatelessWidget {
+class IconLayer extends StatelessWidget {
   final Widget layer;
+  final Uint8List bytes;
 
   /// A Transparent layer
-  Layer._transparent() : layer = SizedBox();
+  IconLayer._transparent(this.bytes) : layer = SizedBox();
 
   /// Layer with only 1 color
-  Layer._mono(Color color)
+  IconLayer._mono(Color color, this.bytes)
       : layer = Container(
           color: color,
         );
 
   /// Layer which is an Image
-  Layer._image(Image memoryImage) : layer = memoryImage;
+  IconLayer._image(Image memoryImage, this.bytes) : layer = memoryImage;
 
   /// Creates a background layer widget
-  static Future<Layer> background(Uint8List bytes) async {
+  static Future<IconLayer> background(Uint8List bytes) async {
     var palette = await PaletteUtils.fromUint8List(bytes);
     var colors = palette?.colors;
     if ((colors?.length ?? 0) > 1) {
-      return Layer._image(
-        Image.memory(
-          bytes,
-          fit: BoxFit.fitWidth,
-        ),
-      );
+      return IconLayer._image(
+          Image.memory(
+            bytes,
+            fit: BoxFit.fitWidth,
+          ),
+          bytes);
     } else if (colors != null) {
       if (colors.isEmpty) {
         int brightness = await LauncherHelper.calculateBrightness(bytes);
         if (brightness == 0) {
-          return Layer._mono(Colors.black);
+          return IconLayer._mono(Colors.black, bytes);
         }
-        return Layer._mono(Colors.white);
+        return IconLayer._mono(Colors.white, bytes);
       }
       // Inflate Layer with 1 color if only 1 color in bytes is present
-      return Layer._mono(colors.first);
+      return IconLayer._mono(colors.first, bytes);
     } else {
-      return Layer._mono(
-        Colors.black,
-      );
+      return IconLayer._mono(Colors.black, bytes);
     }
   }
 
   /// Creates a foreground layer widget
-  static Layer foreground(Uint8List bytes) {
-    return Layer._image(Image.memory(
-      bytes,
-      fit: BoxFit.fitWidth,
-    ));
+  static IconLayer foreground(Uint8List bytes) {
+    return IconLayer._image(
+        Image.memory(
+          bytes,
+          fit: BoxFit.fitWidth,
+        ),
+        bytes);
   }
 
   @override
@@ -66,7 +67,22 @@ class Layer extends StatelessWidget {
 abstract class AppIcon extends StatelessWidget {
   AppIcon({this.radius, this.minRadius, this.maxRadius});
 
+  /// Returns a Layer in [RegularIcon]
+  /// Returns a Stack widget with [foreground] & [background] [IconLayer]s in [AdaptableIcon]s.
+  /// To get [IconLayer]s separately, consider using [foreground] in [RegularIcon] & [foreground] + [background]
+  /// in [AdaptableIcon].
+  /// for example:
+  /// ```dart
+  /// if(icon is RegularIcon)
+  ///   icon.foreground
+  /// else {
+  ///   (icon as AdaptableIcon).foreground
+  ///   (icon as AdaptableIcon).background
+  /// }
+  /// ```
   Widget get icon;
+
+  IconLayer get foreground;
 
   final double radius;
 
@@ -104,14 +120,14 @@ abstract class AppIcon extends StatelessWidget {
     if (iconData == null) {
       final Uint8List iconForegroundData = iconMap['iconForegroundData'];
       final Uint8List iconBackgroundData = iconMap['iconBackgroundData'];
-      Layer foregroundLayer = Layer.foreground(iconForegroundData);
-      Layer backgroundLayer = await Layer.background(iconBackgroundData);
+      IconLayer foregroundLayer = IconLayer.foreground(iconForegroundData);
+      IconLayer backgroundLayer = await IconLayer.background(iconBackgroundData);
       return AdaptableIcon(
         foregroundLayer,
         backgroundLayer,
       );
     } else {
-      Layer iconLayer = Layer.foreground(iconData);
+      IconLayer iconLayer = IconLayer.foreground(iconData);
       return RegularIcon(iconLayer);
     }
   }
@@ -120,7 +136,7 @@ abstract class AppIcon extends StatelessWidget {
 class RegularIcon extends AppIcon {
   final Widget _icon;
 
-  RegularIcon(Layer icon, {double radius, double minRadius, double maxRadius})
+  RegularIcon(IconLayer icon, {double radius, double minRadius, double maxRadius})
       : this._icon = icon,
         super(radius: radius, minRadius: minRadius, maxRadius: maxRadius);
 
@@ -141,20 +157,24 @@ class RegularIcon extends AppIcon {
   }
 
   @override
-  Widget get icon => _icon;
+  IconLayer get icon => _icon;
+  @override
+  IconLayer get foreground => _icon;
 }
 
 class AdaptableIcon extends AppIcon {
   final Widget _stack;
-  final Layer foreground;
-  final Layer background;
-  AdaptableIcon(Layer foreground, Layer background,
+  final IconLayer _foreground;
+  IconLayer get foreground => _foreground;
+  final IconLayer _background;
+  IconLayer get background => _background;
+  AdaptableIcon(IconLayer foreground, IconLayer background,
       {double radius, double minRadius, double maxRadius})
-      : this.foreground = foreground,
-        this.background = background,
+      : this._foreground = foreground,
+        this._background = background,
         _stack = Stack(
           alignment: Alignment.center,
-          children: <Layer>[
+          children: <IconLayer>[
             background,
             foreground,
           ],
