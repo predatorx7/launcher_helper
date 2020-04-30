@@ -5,12 +5,11 @@
 import 'dart:typed_data';
 import 'dart:ui' show Rect;
 import 'dart:ui' as ui;
-import 'package:flutter/widgets.dart' show MemoryImage;
 import 'package:palette_generator/palette_generator.dart';
 export 'package:palette_generator/palette_generator.dart';
 
-/// Additional methods for [PaletteGenerator]
-extension PaletteUtils on PaletteGenerator {
+/// An extension on [PaletteGenerator]
+extension PaletteGeneratorUtils on PaletteGenerator {
   /// Creates a [PaletteGenerator] from [Uint8List] image data asynchronously.
   ///
   /// The [region] specifies the part of the image to inspect for color
@@ -53,19 +52,6 @@ extension PaletteUtils on PaletteGenerator {
       maximumColorCount: maximumColorCount,
       filters: filters,
       targets: targets,
-    );
-  }
-
-  static Future<PaletteGenerator> _fromUint8List(
-    Uint8List imageData, {
-    Rect region,
-    int maximumColorCount,
-    List<PaletteFilter> filters,
-    List<PaletteTarget> targets,
-  }) async {
-    assert(imageData != null);
-    return await PaletteGenerator.fromImageProvider(
-      MemoryImage(imageData),
     );
   }
 }

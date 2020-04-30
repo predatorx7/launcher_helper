@@ -177,8 +177,8 @@ class AppIconShape extends StatelessWidget {
 
   static AppIconShapeData of(BuildContext context,
       {bool shadowThemeOnly = false}) {
-    final _InheritedIconStyle inheritedStyle =
-        context.dependOnInheritedWidgetOfExactType<_InheritedIconStyle>();
+    final _InheritedIconShape inheritedStyle =
+        context.dependOnInheritedWidgetOfExactType<_InheritedIconShape>();
     if (shadowThemeOnly) {
       if (inheritedStyle == null || inheritedStyle.style.isMaterialAppTheme)
         return null;
@@ -192,15 +192,15 @@ class AppIconShape extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _InheritedIconStyle(
+    return _InheritedIconShape(
       style: this,
       child: child,
     );
   }
 }
 
-class _InheritedIconStyle extends InheritedTheme {
-  const _InheritedIconStyle({
+class _InheritedIconShape extends InheritedTheme {
+  const _InheritedIconShape({
     Key key,
     @required this.style,
     @required Widget child,
@@ -211,14 +211,14 @@ class _InheritedIconStyle extends InheritedTheme {
 
   @override
   Widget wrap(BuildContext context, Widget child) {
-    final _InheritedIconStyle ancestorTheme =
-        context.findAncestorWidgetOfExactType<_InheritedIconStyle>();
+    final _InheritedIconShape ancestorTheme =
+        context.findAncestorWidgetOfExactType<_InheritedIconShape>();
     return identical(this, ancestorTheme)
         ? child
         : AppIconShape(data: style.data, child: child);
   }
 
   @override
-  bool updateShouldNotify(_InheritedIconStyle old) =>
+  bool updateShouldNotify(_InheritedIconShape old) =>
       style.data != old.style.data;
 }

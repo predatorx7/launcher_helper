@@ -47,6 +47,25 @@ class LauncherHelper {
     return await _createApplication(data);
   }
 
+  /// Updates & returns [ApplicationCollection] with new or updated packages.
+  /// UNIMPLEMENTED
+  static Future<ApplicationCollection> getNewOrUpdated(
+      ApplicationCollection applications) async {
+    List<Map<String, dynamic>> packageList = [];
+    for (Application app in applications) {
+      packageList.add({
+        'packageName': app.packageName,
+        'versionName': app.versionName,
+        'versionCode': app.versionCode,
+      });
+    }
+    // TODO: Implement platform method
+    List newOrUpdatedPackages = await _channel
+        .invokeMethod('getNewOrUpdated', {"packageList": packageList});
+    applications.update(newOrUpdatedPackages);
+    return null;
+  }
+
   /// Returns true if application exists else false if it doesn't exist. Throws "No_Such_App_Found" exception if app doesn't exists.
   static Future<bool> doesApplicationExist(String packageName) async {
     bool data = await _channel
@@ -114,7 +133,7 @@ class LauncherHelper {
   /// It returns a [PaletteGenerator] based on image (preferably wallpaper) to for use in UI colors.
   static Future<PaletteGenerator> generatePalette(Uint8List imageData) async {
     PaletteGenerator _palette;
-    _palette = await PaletteUtils.fromUint8List(imageData);
+    _palette = await PaletteGeneratorUtils.fromUint8List(imageData);
     return _palette;
   }
 }

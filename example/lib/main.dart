@@ -405,7 +405,7 @@ class _IconShowState extends State<IconShow> {
           height: 100,
           width: 100,
           child: AppIconShape(
-            data: AppIconShapeData.teardrop(),
+            data: AppIconShapeData.square().copyWith(),
             child: (widget.icon as AdaptableIcon).background,
           ),
         ),
