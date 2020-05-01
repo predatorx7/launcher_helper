@@ -40,10 +40,10 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import java.io.ByteArrayOutputStream
-import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 /** LauncherHelper plugin */
 class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity) : MethodCallHandler {
@@ -80,19 +80,65 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
             "getBrightnessFrom" -> getBrightnessFrom(result, call.argument<ByteArray?>("imageData"), call.argument<Int>("skipPixel")!!.toInt())
             "getIconOfPackage" -> getIconOfPackage(call.argument<String>("packageName").toString(), call.argument<Boolean>("requestAdaptableIcons") as Boolean, result)
             "isAppEnabled" -> isAppEnabled(call.argument<String>("packageName").toString(), result)
-            "getNewOrUpdated" -> getNewOrUpdated(call.argument<List<Map<String, *>>>("packageList") as List<Map<String, *>>, result)
+            "getNewOrUpdated" -> getNewOrUpdated(call.argument<List<Map<String, *>>>("packageList") as List<Map<String, *>>, call.argument<Boolean>("requestAdaptableIcons") as Boolean, result)
             else -> result.notImplemented()
         }
     }
 
-    private fun getNewOrUpdated(packageList: List<Map<String, *>>, result: Result) {
-        TODO("Not yet implemented")
+    private fun getNewOrUpdated(packageList: List<Map<String, *>>, requestAdaptableIcons: Boolean, result: Result) {
         // packageList has packages in format
         //        {
         //            'packageName': app.packageName,
         //            'versionName': app.versionName,
         //            'versionCode': app.versionCode,
         //        }
+        val intent = Intent(Intent.ACTION_MAIN, null)
+        intent.addCategory(Intent.CATEGORY_LAUNCHER)
+        val manager = registrar.context().packageManager
+        val resList = manager.queryIntentActivities(intent, 0)
+        val installedPackages = ArrayList<HashMap<String, Any>>()
+        for (resInfo in resList) {
+            try {
+                val app = manager.getApplicationInfo(
+                        resInfo.activityInfo.packageName, PackageManager.GET_META_DATA)
+                if (manager.getLaunchIntentForPackage(app.packageName) != null) {
+                    val current = getApplicationVersion(app.packageName, manager)
+                    current["label"] = app.loadLabel(manager).toString()
+                    installedPackages.add(current)
+                }
+            } catch (e: Exception) {
+                val errorDetails = StringBuilder().append("An unexpected exception occurred when fetching information of ").append(resInfo.activityInfo.packageName.toString()).toString()
+                result.error("1", "ERROR_ON_PACKAGE_UPDATE", errorDetails)
+            }
+        }
+        // installedPackages
+        val updatable: ArrayList<HashMap<String, Any>> = ArrayList<HashMap<String, Any>>()
+        val installedPackageNames: ArrayList<String> = ArrayList<String>()
+        for(j in installedPackages){
+            val targetPackage: String = j["packageName"] as String
+            installedPackageNames.add(targetPackage)
+            for(i in packageList){
+                if(i["packageName"] == j["packageName"]) {
+                    if(i["versionName"] == j["versionName"] && i["versionCode"] == j["versionCode"]) {
+                        continue
+                    }
+                    val updatablePack: HashMap<String, Any> = j
+                    updatablePack["icon"] = getIconOfPackage(targetPackage, manager, requestAdaptableIcons) ?: HashMap<String, Any>()
+                    updatable.add(updatablePack)
+                }
+            }
+        }
+        for (i in packageList) {
+            val targetPackage: String = i["packageName"] as String
+            if(!installedPackageNames.contains(targetPackage)) {
+                // Probably uninstalled
+                val appReply = HashMap<String, Any>()
+                appReply["packageName"] = targetPackage
+                appReply["shouldRemove"] = true
+                updatable.add(appReply)
+            }
+        }
+        result.success(updatable)
         // Reply should be a List with information in format
         //        {
         //            'packageName': app.packageName,
@@ -225,13 +271,33 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         }
     }
 
+    private fun getApplicationInfo(packageName: String, requestAdaptableIcons: Boolean): HashMap<String, Any>? {
+        val pkManager = activity.applicationContext.packageManager
+        return try {
+            getApplicationMap(packageName, requestAdaptableIcons, pkManager)
+        } catch (e: PackageManager.NameNotFoundException) {
+            null
+        }
+    }
+
+    /** Method returns version name, version code of a package. Function gives app information if app exists.
+    Returns error with code "No_Such_App_Found" when application with provided package does not exist */
+    private fun getApplicationVersion(packageName: String, pkManager: PackageManager): HashMap<String, Any> {
+        val map = HashMap<String, Any>()
+        val pkInfo: PackageInfo = pkManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
+        map["packageName"] = packageName
+        map["versionCode"] = pkInfo.versionCode.toString()
+        map["versionName"] = pkInfo.versionName.toString()
+        return map
+    }
+
     /** Method gives complete information on application. Function gives app information if app exists.
     Returns error with code "No_Such_App_Found" when application with provided package does not exist */
     private fun getApplicationMap(packageName: String, requestAdaptableIcons: Boolean, pkManager: PackageManager): HashMap<String, Any> {
         val map = HashMap<String, Any>()
         val pkInfo: PackageInfo = pkManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
         val iconMap: HashMap<String, ByteArray> = getIcon(pkInfo.applicationInfo.loadIcon(pkManager), requestAdaptableIcons)
-        map["label"] = pkInfo.applicationInfo.loadLabel(registrar.context().packageManager).toString()
+        map["label"] = pkInfo.applicationInfo.loadLabel(pkManager).toString()
         map["packageName"] = pkInfo.packageName
         map["versionCode"] = pkInfo.versionCode.toString()
         map["versionName"] = pkInfo.versionName.toString()
@@ -255,6 +321,15 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
             result.success(icon)
         } catch (e: PackageManager.NameNotFoundException) {
             result.error("No_Such_App_Found", "App with $packageName does not exist", null)
+        }
+    }
+
+    private fun getIconOfPackage(packageName: String, pkManager: PackageManager, requestAdaptableIcons: Boolean):HashMap<String, ByteArray>? {
+        return try {
+            val drawable: Drawable = pkManager.getApplicationIcon(packageName)
+            getIcon(drawable, requestAdaptableIcons)
+        } catch (e: PackageManager.NameNotFoundException) {
+            null
         }
     }
 
@@ -343,6 +418,19 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         } else {
             result.success(false)
         }
+    }
+
+    /** Checks if application exists/available. Function returns true if app exists
+    else returns false when application with provided package does not exist */
+    private fun doesAppExist(packageName: String): Boolean {
+        val pkManager = activity.applicationContext.packageManager
+        val pkInfo: PackageInfo?
+        pkInfo = try {
+            pkManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
+        } catch (e: PackageManager.NameNotFoundException) {
+            null
+        }
+        return (pkInfo != null)
     }
 
     /** Get all installed application from [PackageManager] as a map to [MethodChannel]
