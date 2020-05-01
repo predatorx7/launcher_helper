@@ -11,4 +11,4 @@ library launcher_helper;
 export 'src/_launcher_helper.dart';
 export 'src/palette_generator.dart';
 export 'src/application_collection.dart';
-export 'src/_icon.dart';
+export 'src/icon.dart';

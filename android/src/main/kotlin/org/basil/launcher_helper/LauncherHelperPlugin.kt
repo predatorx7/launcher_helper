@@ -49,7 +49,7 @@ import java.util.*
 class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity) : MethodCallHandler {
 
     private var wallpaperData: ByteArray? = null
-    private val registrar: PluginRegistry.Registrar
+    private val registrar: Registrar
 
     init {
         this.registrar = registrar
@@ -72,40 +72,64 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
 
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
-            "getAllApps" -> getAllApps(result)
+            "getAllApps" -> getAllApps(result, call.argument<Boolean>("requestAdaptableIcons") as Boolean)
             "doesAppExist" -> doesAppExist(call.argument<String>("packageName").toString(), result)
-            "getApplicationInfo" -> getApplicationInfo(call.argument<String>("packageName").toString(), result)
+            "getApplicationInfo" -> getApplicationInfo(call.argument<String>("packageName").toString(), call.argument<Boolean>("requestAdaptableIcons") as Boolean, result)
             "launchApp" -> launchApp(call.argument<String>("packageName").toString())
             "getWallpaper" -> getWallpaper(result)
             "getBrightnessFrom" -> getBrightnessFrom(result, call.argument<ByteArray?>("imageData"), call.argument<Int>("skipPixel")!!.toInt())
-            "getIconOfPackage" -> getIconOfPackage(call.argument<String>("packageName").toString(), result)
+            "getIconOfPackage" -> getIconOfPackage(call.argument<String>("packageName").toString(), call.argument<Boolean>("requestAdaptableIcons") as Boolean, result)
             "isAppEnabled" -> isAppEnabled(call.argument<String>("packageName").toString(), result)
+            "getNewOrUpdated" -> getNewOrUpdated(call.argument<List<Map<String, *>>>("packageList") as List<Map<String, *>>, result)
             else -> result.notImplemented()
         }
     }
 
+    private fun getNewOrUpdated(packageList: List<Map<String, *>>, result: Result) {
+        TODO("Not yet implemented")
+        // packageList has packages in format
+        //        {
+        //            'packageName': app.packageName,
+        //            'versionName': app.versionName,
+        //            'versionCode': app.versionCode,
+        //        }
+        // Reply should be a List with information in format
+        //        {
+        //            'packageName': app.packageName,
+        //            'versionName': app.versionName,
+        //            'versionCode': app.versionCode,
+        //            'label': app.label,
+        //            'icon': app.iconData,
+        //        }
+        // or the below format if app is not found
+        //        {
+        //            'packageName': app.packageName,
+        //            'shouldRemove': app.shouldRemove,
+        //        }
+    }
+
     /** Provides device wallpaper through [MethodChannel]. Needs External read/write permission on some devices to work.
      */
-    private fun getWallpaper(result: MethodChannel.Result) {
-        if (wallpaperData != null) {
-            result.success(wallpaperData)
+    private fun getWallpaper(result: Result) {
+        if (this.wallpaperData != null) {
+            result.success(this.wallpaperData)
             return
         }
 
         val wallpaperManager = WallpaperManager.getInstance(registrar.context())
         val wallpaperDrawable = wallpaperManager.drawable
         if (wallpaperDrawable is BitmapDrawable) {
-            wallpaperData = convertToBytes(wallpaperDrawable.bitmap,
+            this.wallpaperData = convertToBytes(wallpaperDrawable.bitmap,
                     Bitmap.CompressFormat.JPEG, 100)
-            result.success(wallpaperData)
+            result.success(this.wallpaperData)
         }
     }
 
     /** Returns brightness of an image provided as image: ByteArray?
      */
-    private fun getBrightnessFrom(result: MethodChannel.Result, image: ByteArray?, skipPixel: Int) {
+    private fun getBrightnessFrom(result: Result, image: ByteArray?, skipPixel: Int) {
         // Convert ByteArray to bitmap
-        var bitmap: Bitmap = BitmapFactory.decodeByteArray(image, 0, image!!.size)
+        val bitmap: Bitmap = BitmapFactory.decodeByteArray(image, 0, image!!.size)
         val brightness = calculateBrightness(bitmap, skipPixel)
         result.success(brightness)
     }
@@ -132,18 +156,18 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
             n++
             i += skipPixels
         }
-        print("r g b = $r $b $g; total = $n")
+//        print("r g b = $r $b $g; total = $n")
         return (r + b + g) / (n * 3)
     }
 
     /** Check if application is enabled.
      */
-    private fun isAppEnabled(packageName: String, result: MethodChannel.Result) {
+    private fun isAppEnabled(packageName: String, result: Result) {
         var isEnabled = false
         try {
-            val appInfo = registrar.context().getPackageManager().getApplicationInfo(packageName, 0)
+            val appInfo = registrar.context().packageManager.getApplicationInfo(packageName, 0)
             if (appInfo != null) {
-                isEnabled = appInfo!!.enabled
+                isEnabled = appInfo.enabled
             }
         } catch (error: PackageManager.NameNotFoundException) {
             result.error("No_Such_App_Found", error.message + " " + packageName, error)
@@ -175,11 +199,9 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
     }
 
     private fun getBitmapFromDrawable(drawable: Drawable): Bitmap {
-//        var bitmap: Bitmap? = null
         if (drawable is BitmapDrawable) {
-            val bitmapDrawable = drawable
-            if (bitmapDrawable.bitmap != null) {
-                return bitmapDrawable.bitmap
+            if (drawable.bitmap != null) {
+                return drawable.bitmap
             }
         }
         val bitmap: Bitmap = if (drawable.intrinsicWidth <= 0 || drawable.intrinsicHeight <= 0) {
@@ -193,10 +215,10 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         return bitmap
     }
 
-    private fun getApplicationInfo(packageName: String, result: MethodChannel.Result) {
+    private fun getApplicationInfo(packageName: String, requestAdaptableIcons: Boolean, result: Result) {
         val pkManager = activity.applicationContext.packageManager
         try {
-            val map = getApplicationMap(packageName, pkManager)
+            val map = getApplicationMap(packageName, requestAdaptableIcons, pkManager)
             result.success(map)
         } catch (e: PackageManager.NameNotFoundException) {
             result.error("No_Such_App_Found", "App with $packageName does not exist", null)
@@ -205,39 +227,41 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
 
     /** Method gives complete information on application. Function gives app information if app exists.
     Returns error with code "No_Such_App_Found" when application with provided package does not exist */
-    private fun getApplicationMap(packageName: String, pkManager: PackageManager): HashMap<String, Any> {
+    private fun getApplicationMap(packageName: String, requestAdaptableIcons: Boolean, pkManager: PackageManager): HashMap<String, Any> {
         val map = HashMap<String, Any>()
         val pkInfo: PackageInfo = pkManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
-        val iconMap: HashMap<String, ByteArray> = getIcon(pkInfo.applicationInfo.loadIcon(pkManager))
-        map["label"] = pkInfo.applicationInfo.loadLabel(registrar.context().getPackageManager()).toString()
+        val iconMap: HashMap<String, ByteArray> = getIcon(pkInfo.applicationInfo.loadIcon(pkManager), requestAdaptableIcons)
+        map["label"] = pkInfo.applicationInfo.loadLabel(registrar.context().packageManager).toString()
         map["packageName"] = pkInfo.packageName
         map["versionCode"] = pkInfo.versionCode.toString()
-        map["versionName"] = pkInfo.versionName
+        map["versionName"] = pkInfo.versionName.toString()
         map["icon"] = iconMap
         return map
     }
 
     /** Method gives complete information on application. Function gives app information if app exists.
     Returns error with code "No_Such_App_Found" when application with provided package does not exist */
-    private fun getApplicationMap(packageName: String): HashMap<String, Any> {
+    private fun getApplicationMap(packageName: String, requestAdaptableIcons: Boolean): HashMap<String, Any> {
         val map = HashMap<String, Any>()
         val pkManager = activity.applicationContext.packageManager
-        return getApplicationMap(packageName, pkManager)
+        return getApplicationMap(packageName, requestAdaptableIcons, pkManager)
     }
 
-    private fun getIconOfPackage(packageName: String, result: MethodChannel.Result) {
+    private fun getIconOfPackage(packageName: String, requestAdaptableIcons: Boolean, result: Result) {
         val pkManager = activity.applicationContext.packageManager
         try {
             val drawable: Drawable = pkManager.getApplicationIcon(packageName)
-            val icon: HashMap<String, ByteArray> = getIcon(drawable)
+            val icon: HashMap<String, ByteArray> = getIcon(drawable, requestAdaptableIcons)
             result.success(icon)
         } catch (e: PackageManager.NameNotFoundException) {
             result.error("No_Such_App_Found", "App with $packageName does not exist", null)
         }
     }
 
-    private fun getIcon(icon: Drawable): HashMap<String, ByteArray> {
-//        return getRegularIcon(icon)
+    private fun getIcon(icon: Drawable, requestAdaptableIcons: Boolean): HashMap<String, ByteArray> {
+        if (!requestAdaptableIcons) {
+            return getRegularIcon(icon)
+        }
         return when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> {
                 getIconForAndroid26(icon)
@@ -305,13 +329,13 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
 
     /** Checks if application exists/available. Function returns true if app exists
     else returns false when application with provided package does not exist */
-    private fun doesAppExist(packageName: String, result: MethodChannel.Result) {
+    private fun doesAppExist(packageName: String, result: Result) {
         val pkManager = activity.applicationContext.packageManager
-        var pkInfo: PackageInfo?
-        try {
-            pkInfo = pkManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
+        val pkInfo: PackageInfo?
+        pkInfo = try {
+            pkManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
         } catch (e: PackageManager.NameNotFoundException) {
-            pkInfo = null
+            null
         }
         if (pkInfo != null) {
             result.success(true)
@@ -323,10 +347,10 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
 
     /** Get all installed application from [PackageManager] as a map to [MethodChannel]
      */
-    private fun getAllApps(result: MethodChannel.Result) {
+    private fun getAllApps(result: Result, requestAdaptableIcons: Boolean) {
         val intent = Intent(Intent.ACTION_MAIN, null)
         intent.addCategory(Intent.CATEGORY_LAUNCHER)
-        val manager = registrar.context().getPackageManager()
+        val manager = registrar.context().packageManager
         val resList = manager.queryIntentActivities(intent, 0)
         val outputMap = ArrayList<Map<String, Any>>()
         for (resInfo in resList) {
@@ -334,7 +358,7 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
                 val app = manager.getApplicationInfo(
                         resInfo.activityInfo.packageName, PackageManager.GET_META_DATA)
                 if (manager.getLaunchIntentForPackage(app.packageName) != null) {
-                    val current = getApplicationMap(app.packageName, manager)
+                    val current = getApplicationMap(app.packageName, requestAdaptableIcons, manager)
                     outputMap.add(current)
                 }
             } catch (e: Exception) {

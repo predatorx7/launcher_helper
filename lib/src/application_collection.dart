@@ -5,7 +5,7 @@
 import 'dart:typed_data';
 
 import 'package:launcher_helper/launcher_helper.dart';
-import '_icon.dart';
+import 'icon.dart';
 // TODO(predatorx7): Change [ApplicationCollection] to [Packages] or [PackageCollection] & [Application] to [Package]
 
 /// This [ApplicationCollection] is a List of [Application] (which has application information).

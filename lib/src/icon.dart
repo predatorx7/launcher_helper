@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 import '../launcher_helper.dart';
-export '_icon_shape.dart';
-export '_icon_layer.dart';
+export 'icon_shape.dart';
+export 'icon_layer.dart';
 
 abstract class AppIcon extends StatelessWidget {
   /// Returns a Layer in [RegularIcon]

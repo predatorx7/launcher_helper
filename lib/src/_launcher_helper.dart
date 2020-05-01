@@ -6,9 +6,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'application_collection.dart';
 import 'palette_generator.dart';
 
@@ -29,22 +27,43 @@ import 'palette_generator.dart';
 /// - [generatePalette] generates color palettes from `Uint8List` image data using [PaletteGenerator].
 class LauncherHelper {
   static const MethodChannel _channel = const MethodChannel('launcher_helper');
-  static Future<ApplicationCollection> getApplications() async {
-    return await applicationCollection;
+
+  /// Returns an instance of [ApplicationCollection] with installed packages as [Application]s from this device.
+  ///
+  /// If [requestAdaptableIcons] is true, then this will get adaptable version of icons on supported
+  /// platforms if available. [requestAdaptableIcons] defaults to true.
+  /// Set [requestAdaptableIcons] to false to only obtain `RegularAppIcon`.
+  ///
+  /// This is an expensive operation. Use [getNewOrUpdated] for updating any changes in [ApplicationCollection]
+  static Future<ApplicationCollection> getApplications(
+      [bool requestAdaptableIcons = true]) async {
+    Map<String, bool> _arguments = {
+      'requestAdaptableIcons': requestAdaptableIcons ?? true
+    };
+    List data = await _channel.invokeMethod('getAllApps', _arguments);
+    return await ApplicationCollection.fromList(data);
   }
 
   /// Returns [ApplicationCollection] of [Application]s installed on this device.
-  /// This is an expensive operation
+  ///
+  /// This is an expensive operation. Use [getNewOrUpdated] for updating any changes in [ApplicationCollection]
+  ///
+  /// This is now deprecated. Use [getApplications] instead of this method.
+  @Deprecated('Use [getApplications] instead.')
   static Future<ApplicationCollection> get applicationCollection async {
-    List data = await _channel.invokeMethod('getAllApps');
-    return await _createApplicationCollection(data);
+    return await getApplications();
   }
 
-  /// Returns [Application] matching with provided `packageName` installed on this device. Throws "No_Such_App_Found" exception if app doesn't exists.
-  static Future<Application> getApplicationInfo(String packageName) async {
-    Map data = await _channel
-        .invokeMethod('getApplicationInfo', {"packageName": packageName});
-    return await _createApplication(data);
+  /// Returns [Application] matching with provided [packageName] installed on this device. Throws "No_Such_App_Found" exception if app doesn't exists.
+  static Future<Application> getApplicationInfo(String packageName,
+      [bool requestAdaptableIcons = true]) async {
+    assert(packageName != null);
+    Map<String, dynamic> _arguments = {
+      'packageName': packageName,
+      'requestAdaptableIcons': requestAdaptableIcons ?? true
+    };
+    Map data = await _channel.invokeMethod('getApplicationInfo', _arguments);
+    return await Application.create(data);
   }
 
   /// Updates & returns [ApplicationCollection] with new or updated packages.
@@ -59,11 +78,11 @@ class LauncherHelper {
         'versionCode': app.versionCode,
       });
     }
-    // TODO: Implement platform method
     List newOrUpdatedPackages = await _channel
         .invokeMethod('getNewOrUpdated', {"packageList": packageList});
     applications.update(newOrUpdatedPackages);
-    return null;
+    await applications.update(newOrUpdatedPackages);
+    return applications;
   }
 
   /// Returns true if application exists else false if it doesn't exist. Throws "No_Such_App_Found" exception if app doesn't exists.
@@ -80,15 +99,20 @@ class LauncherHelper {
     return data;
   }
 
-  /// Returns application icon. Throws "No_Such_App_Found" exception if app or app-icon doesn't exists for the package.
+  /// Returns application icon data in a map. Throws "No_Such_App_Found" exception if app or app-icon doesn't exists for the package.
   /// Result is a Map as
   /// ```
   /// {'iconData':<Uint8List> ?? null, 'iconForegroundData':<Uint8List> ?? null,'iconBackgroundData':<Uint8List> ?? null}
   /// ```
-  static Future<Map<String, dynamic>> getApplicationIcon(
-      String packageName) async {
-    Map<String, dynamic> data = await _channel
-        .invokeMethod('getIconOfPackage', {"packageName": packageName});
+  static Future<Map<String, dynamic>> getApplicationIcon(String packageName,
+      [bool requestAdaptableIcons = true]) async {
+    assert(packageName != null);
+    Map<String, dynamic> _arguments = {
+      'packageName': packageName,
+      'requestAdaptableIcons': requestAdaptableIcons ?? true
+    };
+    Map<String, dynamic> data =
+        await _channel.invokeMethod('getIconOfPackage', _arguments);
     return data;
   }
 
@@ -98,7 +122,7 @@ class LauncherHelper {
       await _channel.invokeMethod("launchApp", {"packageName": packageName});
       return true;
     } catch (e) {
-      debugPrint('[LauncherHelper:launchApp] Failed because: $e');
+      print('[LauncherHelper:launchApp] Failed because: $e');
       return false;
     }
   }
@@ -106,7 +130,7 @@ class LauncherHelper {
   /// This gets the current wallpaper on the user's device. This method
   /// needs the READ_EXTERNAL_STORAGE permission on Android Oreo & above.
   static Future<Uint8List> get getWallpaper async {
-    debugPrint(
+    print(
         "[LauncherHelper] External Storage Access permission might be needed for Android Oreo & above.");
     Uint8List data = await _channel.invokeMethod('getWallpaper');
     return data;
@@ -120,7 +144,7 @@ class LauncherHelper {
   ///
   /// __Note:__
   /// - This method needs the READ_EXTERNAL_STORAGE permission on Android Oreo & above.
-  /// - This uses kotlin implementation for calculating brightness.
+  /// - This uses platform implementation for calculating brightness.
   static Future<int> calculateBrightness(Uint8List imageData,
       {int skipPixel = 1}) async {
     assert(skipPixel > 0, 'skipPixel should have a value greater than 0');
@@ -131,17 +155,13 @@ class LauncherHelper {
   }
 
   /// It returns a [PaletteGenerator] based on image (preferably wallpaper) to for use in UI colors.
+  ///
+  /// Same as [PaletteGeneratorUtils.fromUint8List].
+  ///
+  /// Results might be unexpected if image is completely white or completely black.
   static Future<PaletteGenerator> generatePalette(Uint8List imageData) async {
     PaletteGenerator _palette;
     _palette = await PaletteGeneratorUtils.fromUint8List(imageData);
     return _palette;
   }
-}
-
-Future<Application> _createApplication(Map map) async {
-  return await Application.create(map);
-}
-
-Future<ApplicationCollection> _createApplicationCollection(List list) async {
-  return await ApplicationCollection.fromList(list);
 }
