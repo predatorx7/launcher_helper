@@ -375,7 +375,7 @@ Future customDialogBox(Application app, BuildContext context) async {
               ),
               RaisedButton(
                 onPressed: () {
-                  LauncherHelper.launchApp(app.packageName);
+                  LauncherHelper.launchApplication(app.packageName);
                 },
                 child: Text("Launch"),
               ),

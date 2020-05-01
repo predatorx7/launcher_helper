@@ -70,13 +70,13 @@ class LauncherHelperPlugin(private val registrar: Registrar, private val activit
 
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
-            "getAllApps" -> getAllApps(result, call.argument<Boolean>("requestAdaptableIcons") as Boolean)
+            "getApplications" -> getAllApps(result, call.argument<Boolean>("requestAdaptableIcons") as Boolean)
             "doesAppExist" -> doesAppExist(call.argument<String>("packageName").toString(), result)
             "getApplicationInfo" -> getApplicationInfo(call.argument<String>("packageName").toString(), call.argument<Boolean>("requestAdaptableIcons") as Boolean, result)
             "launchApp" -> launchApp(call.argument<String>("packageName").toString())
             "getWallpaper" -> getWallpaper(result)
             "getBrightnessFrom" -> getBrightnessFrom(result, call.argument<ByteArray?>("imageData"), call.argument<Int>("skipPixel")!!.toInt())
-            "getIconOfPackage" -> getIconOfPackage(call.argument<String>("packageName").toString(), call.argument<Boolean>("requestAdaptableIcons") as Boolean, result)
+            "getApplicationIcon" -> getIconOfPackage(call.argument<String>("packageName").toString(), call.argument<Boolean>("requestAdaptableIcons") as Boolean, result)
             "isAppEnabled" -> isAppEnabled(call.argument<String>("packageName").toString(), result)
             "getNewOrUpdated" -> getNewOrUpdated(call.argument<List<Map<String, *>>>("packageList") as List<Map<String, *>>, call.argument<Boolean>("requestAdaptableIcons") as Boolean, result)
             else -> result.notImplemented()

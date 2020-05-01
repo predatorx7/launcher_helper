@@ -1,6 +1,6 @@
 name: launcher_helper
-description: To help create launcher, this plugin provides information of installed apps & wallpaper, and extract colors for making UI from wallpaper or icon.
-version: 0.4.4-dev+2005
+description: To help create an android launcher this plugin provides wallpaper, installed package details, etc in an easy way.
+version: 0.4.5-dev+2005
 # author: Mushaheed Syed <smushaheed@gmail.com>
 homepage: https://github.com/predatorx7/launcher_helper
 
@@ -11,9 +11,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  collection: ^1.14.6
   palette_generator: ^0.2.2
-  path: ^1.6.1
 
 dev_dependencies:
   flutter_test:

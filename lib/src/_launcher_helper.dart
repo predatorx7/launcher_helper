@@ -7,6 +7,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
+import 'package:launcher_helper/src/_strings.dart';
+import 'package:launcher_helper/src/icon.dart';
 import 'application_collection.dart';
 import 'palette_generator.dart';
 
@@ -21,7 +23,7 @@ import 'palette_generator.dart';
 /// - [doesApplicationExist] to check if application with provided `packageName` exists.
 /// - [getApplicationIcon] returns app icon for provided `packageName`.
 /// - [isApplicationEnabled] returns `true` if application is enabled else returns `false`.
-/// - [launchApp] can launch apps by providing their package name.
+/// - [launchApplication] can launch apps by providing their package name.
 /// - [getWallpaper] returns device wallpaper as [Uint8List].
 /// - [calculateBrightness] calculates brightness of an image from every pixel.
 /// - [generatePalette] generates color palettes from `Uint8List` image data using [PaletteGenerator].
@@ -40,7 +42,7 @@ class LauncherHelper {
     Map<String, bool> _arguments = {
       'requestAdaptableIcons': requestAdaptableIcons ?? true
     };
-    List data = await _channel.invokeMethod('getAllApps', _arguments);
+    List data = await _channel.invokeMethod('getApplications', _arguments);
     return await ApplicationCollection.fromList(data);
   }
 
@@ -49,7 +51,7 @@ class LauncherHelper {
   /// This is an expensive operation. Use [getNewOrUpdated] for updating any changes in [ApplicationCollection]
   ///
   /// This is now deprecated. Use [getApplications] instead of this method.
-  @Deprecated('Use [getApplications] instead.')
+  @Deprecated('Use [getApplications] instead. ${Strings.removedIn}')
   static Future<ApplicationCollection> get applicationCollection async {
     return await getApplications();
   }
@@ -103,12 +105,19 @@ class LauncherHelper {
     return data;
   }
 
+  static Future<AppIcon> getApplicationIcon(String packageName,
+      [bool requestAdaptableIcons = true]) async {
+    Map<String, dynamic> responseData =
+        await getRawApplicationIcon(packageName, requestAdaptableIcons);
+    return await AppIcon.getIcon(responseData);
+  }
+
   /// Returns application icon data in a map. Throws "No_Such_App_Found" exception if app or app-icon doesn't exists for the package.
   /// Result is a Map as
   /// ```
   /// {'iconData':<Uint8List> ?? null, 'iconForegroundData':<Uint8List> ?? null,'iconBackgroundData':<Uint8List> ?? null}
   /// ```
-  static Future<Map<String, dynamic>> getApplicationIcon(String packageName,
+  static Future<Map<String, dynamic>> getRawApplicationIcon(String packageName,
       [bool requestAdaptableIcons = true]) async {
     assert(packageName != null);
     Map<String, dynamic> _arguments = {
@@ -116,12 +125,20 @@ class LauncherHelper {
       'requestAdaptableIcons': requestAdaptableIcons ?? true
     };
     Map<String, dynamic> data =
-        await _channel.invokeMethod('getIconOfPackage', _arguments);
+        await _channel.invokeMethod('getApplicationIcon', _arguments);
     return data;
   }
 
   /// Launches an app using its package name.
+  ///
+  /// Deprecated. Use [launchApplication] instead.
+  @Deprecated("Use [launchApplication] instead. ${Strings.removedIn}")
   static Future<bool> launchApp(String packageName) async {
+    return await launchApplication(packageName);
+  }
+
+  /// Launches an app using its package name.
+  static Future<bool> launchApplication(String packageName) async {
     try {
       await _channel.invokeMethod("launchApp", {"packageName": packageName});
       return true;

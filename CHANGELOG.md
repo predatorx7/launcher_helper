@@ -7,6 +7,10 @@
 - API stability
 - Icon-pack support
 
+## 0.4.5-dev+2005
+
+...
+
 ## 0.4.4-dev+2005
 
 - Method to update changes ApplicationCollection from installed applications (Untested)

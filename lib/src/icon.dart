@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:launcher_helper/src/_strings.dart';
 
 import '../launcher_helper.dart';
 export 'icon_shape.dart';
@@ -29,10 +30,10 @@ abstract class AppIcon extends StatelessWidget {
   static Future<AppIcon> getIcon(
     Map iconMap,
   ) async {
-    final Uint8List iconData = iconMap['iconData'];
+    final Uint8List iconData = iconMap[Strings.iconData];
     if (iconData == null) {
-      final Uint8List iconForegroundData = iconMap['iconForegroundData'];
-      final Uint8List iconBackgroundData = iconMap['iconBackgroundData'];
+      final Uint8List iconForegroundData = iconMap[Strings.iconForegroundData];
+      final Uint8List iconBackgroundData = iconMap[Strings.iconBackgroundData];
       IconLayer foregroundLayer =
           IconLayer.foreground(iconForegroundData, true);
       IconLayer backgroundLayer =
