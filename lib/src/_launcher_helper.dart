@@ -67,7 +67,6 @@ class LauncherHelper {
   }
 
   /// Updates & returns [ApplicationCollection] with new or updated packages.
-  /// UNIMPLEMENTED
   static Future<ApplicationCollection> getNewOrUpdated(
       ApplicationCollection applications,
       [bool requestAdaptableIcons = true]) async {

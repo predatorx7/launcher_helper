@@ -2,10 +2,16 @@
 
 ## Upcoming
 
-- Better example
+- New example
+- Documentation updates
+- API stability
+- Icon-pack support
+
+## 0.4.4-dev+2005
+
+- Method to update changes ApplicationCollection from installed applications (Untested)
 - Documentation updates
 - API internal improvements
-- Icon-pack support
 - version semantic now will follow:
   - `version + hotfixes` &nbsp;for stable builds.
   - `version - pre-release + yymm` &nbsp;for any pre-release builds.
