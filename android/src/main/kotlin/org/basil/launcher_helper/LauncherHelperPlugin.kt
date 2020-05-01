@@ -46,14 +46,12 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 /** LauncherHelper plugin */
-class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity) : MethodCallHandler {
-
+class LauncherHelperPlugin(private val registrar: Registrar, private val activity: Activity) : MethodCallHandler {
+    /** wallpaperData may contain a ByteArray (Uint8List) of wallpaper image.
+     *
+     *  Initially null.
+     */
     private var wallpaperData: ByteArray? = null
-    private val registrar: Registrar
-
-    init {
-        this.registrar = registrar
-    }
 
     companion object {
         /** Plugin registration */
@@ -92,53 +90,8 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         //            'versionName': app.versionName,
         //            'versionCode': app.versionCode,
         //        }
-        val intent = Intent(Intent.ACTION_MAIN, null)
-        intent.addCategory(Intent.CATEGORY_LAUNCHER)
-        val manager = registrar.context().packageManager
-        val resList = manager.queryIntentActivities(intent, 0)
-        val installedPackages = ArrayList<HashMap<String, Any>>()
-        for (resInfo in resList) {
-            try {
-                val app = manager.getApplicationInfo(
-                        resInfo.activityInfo.packageName, PackageManager.GET_META_DATA)
-                if (manager.getLaunchIntentForPackage(app.packageName) != null) {
-                    val current = getApplicationVersion(app.packageName, manager)
-                    current["label"] = app.loadLabel(manager).toString()
-                    installedPackages.add(current)
-                }
-            } catch (e: Exception) {
-                val errorDetails = StringBuilder().append("An unexpected exception occurred when fetching information of ").append(resInfo.activityInfo.packageName.toString()).toString()
-                result.error("1", "ERROR_ON_PACKAGE_UPDATE", errorDetails)
-            }
-        }
-        // installedPackages
-        val updatable: ArrayList<HashMap<String, Any>> = ArrayList<HashMap<String, Any>>()
-        val installedPackageNames: ArrayList<String> = ArrayList<String>()
-        for(j in installedPackages){
-            val targetPackage: String = j["packageName"] as String
-            installedPackageNames.add(targetPackage)
-            for(i in packageList){
-                if(i["packageName"] == j["packageName"]) {
-                    if(i["versionName"] == j["versionName"] && i["versionCode"] == j["versionCode"]) {
-                        continue
-                    }
-                    val updatablePack: HashMap<String, Any> = j
-                    updatablePack["icon"] = getIconOfPackage(targetPackage, manager, requestAdaptableIcons) ?: HashMap<String, Any>()
-                    updatable.add(updatablePack)
-                }
-            }
-        }
-        for (i in packageList) {
-            val targetPackage: String = i["packageName"] as String
-            if(!installedPackageNames.contains(targetPackage)) {
-                // Probably uninstalled
-                val appReply = HashMap<String, Any>()
-                appReply["packageName"] = targetPackage
-                appReply["shouldRemove"] = true
-                updatable.add(appReply)
-            }
-        }
-        result.success(updatable)
+        //
+        // -------------------------------------------------------
         // Reply should be a List with information in format
         //        {
         //            'packageName': app.packageName,
@@ -147,11 +100,65 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         //            'label': app.label,
         //            'icon': app.iconData,
         //        }
-        // or the below format if app is not found
+        // or the below format if app is not found (uninstalled)
         //        {
         //            'packageName': app.packageName,
-        //            'shouldRemove': app.shouldRemove,
+        //            'shouldRemove': true,
         //        }
+
+        // -------------------------------------------------------
+        val intent = Intent(Intent.ACTION_MAIN, null)
+        intent.addCategory(Intent.CATEGORY_LAUNCHER)
+        val manager = registrar.context().packageManager
+        val resList = manager.queryIntentActivities(intent, 0)
+        // The reply with information on new, removed or updated packages
+        val updatable: ArrayList<HashMap<String, Any>> = ArrayList<HashMap<String, Any>>()
+        val installedPackageNames: ArrayList<String> = ArrayList<String>()
+        for (resInfo in resList) {
+            var shouldContinue: Boolean = false
+            try {
+                val app = manager.getApplicationInfo(
+                        resInfo.activityInfo.packageName, PackageManager.GET_META_DATA)
+                if (manager.getLaunchIntentForPackage(app.packageName) != null) {
+                    val current = getApplicationVersion(app.packageName, manager)
+                    val targetPackage: String = current["packageName"] as String
+                    installedPackageNames.add(targetPackage)
+                    for (i in packageList) {
+                        if (i["packageName"] == targetPackage && (i["versionName"] == current["versionName"] && i["versionCode"] == current["versionCode"])) {
+                            // App is not updated, no changes needed. Hence, skipping this package
+                            shouldContinue = true
+                            break
+                        }
+                    }
+                    if (shouldContinue) continue
+                    // Existing package is modified or this is a new package. Hence needs to be added.
+                    current["label"] = app.loadLabel(manager).toString()
+                    current["icon"] = getIconOfPackage(targetPackage, manager, requestAdaptableIcons)
+                            ?: HashMap<String, Any>()
+                    current["shouldRemove"] = false
+                    updatable.add(current)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                val errorDetails = StringBuilder().append("An unexpected exception occurred when fetching information of ").append(resInfo.activityInfo.packageName.toString()).toString()
+                result.error("1", "ERROR_ON_PACKAGE_UPDATE", errorDetails)
+            }
+        }
+        // Iterating list of package information we received from the app to
+        // check if it exists in current installedPackageNames.
+        // If installedPackageNames doesn't contain a package from packageList then it had been
+        // be uninstalled from the device.
+        for (i in packageList) {
+            val targetPackage: String = i["packageName"] as String
+            if (!installedPackageNames.contains(targetPackage)) {
+                // Probably uninstalled
+                val appReply = HashMap<String, Any>()
+                appReply["packageName"] = targetPackage
+                appReply["shouldRemove"] = true
+                updatable.add(appReply)
+            }
+        }
+        result.success(updatable)
     }
 
     /** Provides device wallpaper through [MethodChannel]. Needs External read/write permission on some devices to work.
@@ -324,7 +331,7 @@ class LauncherHelperPlugin(registrar: Registrar, private val activity: Activity)
         }
     }
 
-    private fun getIconOfPackage(packageName: String, pkManager: PackageManager, requestAdaptableIcons: Boolean):HashMap<String, ByteArray>? {
+    private fun getIconOfPackage(packageName: String, pkManager: PackageManager, requestAdaptableIcons: Boolean): HashMap<String, ByteArray>? {
         return try {
             val drawable: Drawable = pkManager.getApplicationIcon(packageName)
             getIcon(drawable, requestAdaptableIcons)

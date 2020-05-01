@@ -69,7 +69,8 @@ class LauncherHelper {
   /// Updates & returns [ApplicationCollection] with new or updated packages.
   /// UNIMPLEMENTED
   static Future<ApplicationCollection> getNewOrUpdated(
-      ApplicationCollection applications) async {
+      ApplicationCollection applications,
+      [bool requestAdaptableIcons = true]) async {
     List<Map<String, dynamic>> packageList = [];
     for (Application app in applications) {
       packageList.add({
@@ -78,8 +79,12 @@ class LauncherHelper {
         'versionCode': app.versionCode,
       });
     }
-    List newOrUpdatedPackages = await _channel
-        .invokeMethod('getNewOrUpdated', {"packageList": packageList});
+    Map<String, dynamic> _arguments = {
+      "packageList": packageList,
+      'requestAdaptableIcons': requestAdaptableIcons ?? true
+    };
+    List newOrUpdatedPackages =
+        await _channel.invokeMethod('getNewOrUpdated', _arguments);
     applications.update(newOrUpdatedPackages);
     await applications.update(newOrUpdatedPackages);
     return applications;
