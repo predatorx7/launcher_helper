@@ -256,8 +256,7 @@ class ApplicationPage extends StatelessWidget {
                     signed: false,
                   ),
                   decoration: InputDecoration(
-                    hintText:
-                        'scale',
+                    hintText: 'scale',
                   ),
                 ),
               ),

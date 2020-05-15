@@ -9,7 +9,8 @@
 
 ## 0.4.5-dev+2005
 
-...
+- Documentation updates update changes in ApplicationCollection & Wallpaper (tested)
+- API stability
 
 ## 0.4.4-dev+2005
 
