@@ -51,7 +51,9 @@ abstract class AppIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double radius = AppIconShape.of(context).radius ?? defaultIconRadius;
-    return ConstrainedBox(
+    return AnimatedContainer(
+      curve: Curves.fastOutSlowIn,
+      duration: kThemeChangeDuration,
       constraints: BoxConstraints.tight(Size.fromRadius(radius)),
       child: widget,
     );

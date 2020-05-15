@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 const double defaultIconRadius = 25;
 
@@ -161,7 +162,6 @@ class AppIconShape extends StatelessWidget {
   const AppIconShape({
     Key key,
     @required this.data,
-    this.isMaterialAppTheme = false,
     @required this.child,
   })  : assert(child != null),
         assert(data != null),
@@ -169,24 +169,19 @@ class AppIconShape extends StatelessWidget {
 
   final AppIconShapeData data;
 
-  final bool isMaterialAppTheme;
-
   final Widget child;
 
-  static final AppIconShapeData _kFallbackTheme = AppIconShapeData.fallback();
+  static final AppIconShapeData _fallbackAppIconShape =
+      AppIconShapeData.fallback();
 
-  static AppIconShapeData of(BuildContext context,
-      {bool shadowThemeOnly = false}) {
+  static AppIconShapeData of(
+    BuildContext context,
+  ) {
     final _InheritedIconShape inheritedStyle =
         context.dependOnInheritedWidgetOfExactType<_InheritedIconShape>();
-    if (shadowThemeOnly) {
-      if (inheritedStyle == null || inheritedStyle.style.isMaterialAppTheme)
-        return null;
-      return inheritedStyle.style.data;
-    }
 
     final AppIconShapeData style =
-        inheritedStyle?.style?.data ?? _kFallbackTheme;
+        inheritedStyle?.style?.data ?? _fallbackAppIconShape;
     return style;
   }
 

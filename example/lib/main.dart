@@ -100,8 +100,15 @@ class WallpaperPage extends StatelessWidget {
 }
 
 class ApplicationsPage extends StatelessWidget {
+  void initPostFrame(BuildContext context) async {
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => Provider.of<ApplicationPageModel>(context, listen: false).init(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    initPostFrame(context);
     return Scaffold(
       appBar: AppBar(
           title: Text(
@@ -159,9 +166,9 @@ class ApplicationPage extends StatelessWidget {
     this.app, {
     Key key,
   }) : super(key: key);
+  
   @override
   Widget build(BuildContext context) {
-    final TextEditingController textController = TextEditingController();
     return Consumer<ApplicationPageModel>(
       builder: (context, model, _) {
         return Scaffold(
@@ -190,94 +197,82 @@ class ApplicationPage extends StatelessWidget {
               ],
             ),
           ),
-          body: ListView(
-            children: <Widget>[
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: AppIconShape(
-                      data: model.iconShape,
+          body: AppIconShape(
+            data: model.iconShape,
+            child: ListView(
+              children: <Widget>[
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
                       child: app.icon,
                     ),
+                  ],
+                ),
+                Divider(),
+                Padding(
+                  padding: const EdgeInsets.only(left: 15, right: 15),
+                  child: FlatButton(
+                    color: Colors.cyan,
+                    child: Text(
+                      'Open',
+                    ),
+                    onPressed: () {
+                      app.launch();
+                    },
                   ),
-                ],
-              ),
-              Divider(),
-              Padding(
-                padding: const EdgeInsets.only(left: 15, right: 15),
-                child: FlatButton(
-                  color: Colors.cyan,
-                  child: Text(
-                    'Open',
-                  ),
+                ),
+                Heading('Change Icon shape'),
+                SizedBox(height: 10),
+                OutlineButton(
+                  child: Text('Circular'),
                   onPressed: () {
-                    LauncherHelper.launchApplication(app.packageName);
+                    model.setIconShape(AppIconShapeData.circular());
                   },
                 ),
-              ),
-              Heading('Change Icon shape'),
-              SizedBox(height: 10),
-              OutlineButton(
-                child: Text('Circular'),
-                onPressed: () {
-                  model.setIconShape(AppIconShapeData.circular());
-                },
-              ),
-              OutlineButton(
-                child: Text('Square'),
-                onPressed: () {
-                  model.setIconShape(AppIconShapeData.square());
-                },
-              ),
-              OutlineButton(
-                child: Text('Squircle'),
-                onPressed: () {
-                  model.setIconShape(AppIconShapeData.squircle());
-                },
-              ),
-              OutlineButton(
-                child: Text('Teardrop'),
-                onPressed: () {
-                  model.setIconShape(AppIconShapeData.teardrop());
-                },
-              ),
-              Divider(),
-              Heading('Change Icon scale'),
-              SizedBox(height: 5),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: textController,
-                  keyboardType: TextInputType.numberWithOptions(
-                    decimal: true,
-                    signed: false,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'scale',
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: FlatButton(
-                  color: Colors.white,
-                  child: Text('Apply scale'),
+                OutlineButton(
+                  child: Text('Square'),
                   onPressed: () {
-                    double _scale = double.parse(textController.text);
-                    print('changing size to $_scale');
-                    model.setIconShape(
+                    model.setIconShape(AppIconShapeData.square());
+                  },
+                ),
+                OutlineButton(
+                  child: Text('Squircle'),
+                  onPressed: () {
+                    model.setIconShape(AppIconShapeData.squircle());
+                  },
+                ),
+                OutlineButton(
+                  child: Text('Teardrop'),
+                  onPressed: () {
+                    model.setIconShape(AppIconShapeData.teardrop());
+                  },
+                ),
+                Divider(),
+                Heading('Change Icon radius ${model.iconShape.radius}'),
+                SizedBox(height: 5),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Slider(
+                    value: model.iconShape.radius,
+                    min: 20,
+                    max: 100,
+                    onChanged: (double value) {
                       AppIconShape.of(context).copyWith(
-                        scale: _scale,
-                      ),
-                    );
-                    textController.clear();
-                  },
+                        radius: value,
+                      );
+                      model.setIconShape(
+                        AppIconShape.of(context).copyWith(
+                          radius: value,
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -387,9 +382,7 @@ class ApplicationPageModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  ApplicationPageModel() {
-    init();
-  }
+  ApplicationPageModel();
 
   init() async {
     if (hasApplications) return;

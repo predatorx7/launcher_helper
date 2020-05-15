@@ -118,7 +118,9 @@ class IconLayer extends StatelessWidget {
         AppIconShape.of(context).borderRadius ?? BorderRadius.circular(0);
     double scale = AppIconShape.of(context).scale ?? defaultIconScale;
     BoxDecoration _decoration = buildDecoration(context);
-    Widget child = Container(
+    Widget child = AnimatedContainer(
+      duration: kThemeChangeDuration,
+      curve: Curves.fastOutSlowIn,
       decoration: _decoration,
     );
     if (!(layer is Image)) {

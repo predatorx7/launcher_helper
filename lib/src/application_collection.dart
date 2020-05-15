@@ -263,6 +263,11 @@ class Application extends Comparable<Application> {
 
   bool get isAdaptableIcon => (this._icon is AdaptableIcon) ? true : false;
 
+  /// Launches this application
+  Future<bool> launch() async {
+    return await LauncherHelper.launchApplication(packageName);
+  }
+
   /// It updates [Application] information using [Launcher.getApplicationInfo].
   Future refresh() async {
     Application appInfo =
