@@ -1,2 +1,1 @@
-const String RootRoute = '/';
-const String DesktopRoute = 'desktopRoute';
+const String ShowcaseRoute = '/';

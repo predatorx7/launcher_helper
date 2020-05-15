@@ -12,6 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   palette_generator: ^0.2.2
+  provider: ^4.1.0
 
 dev_dependencies:
   flutter_test:

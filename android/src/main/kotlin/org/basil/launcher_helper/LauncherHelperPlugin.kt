@@ -136,6 +136,7 @@ class LauncherHelperPlugin(private val registrar: Registrar, private val activit
                     current["icon"] = getIconOfPackage(targetPackage, manager, requestAdaptableIcons)
                             ?: HashMap<String, Any>()
                     current["shouldRemove"] = false
+                    // Add logic to check if this is a new package
                     updatable.add(current)
                 }
             } catch (e: Exception) {
@@ -164,11 +165,6 @@ class LauncherHelperPlugin(private val registrar: Registrar, private val activit
     /** Provides device wallpaper through [MethodChannel]. Needs External read/write permission on some devices to work.
      */
     private fun getWallpaper(result: Result) {
-        if (this.wallpaperData != null) {
-            result.success(this.wallpaperData)
-            return
-        }
-
         val wallpaperManager = WallpaperManager.getInstance(registrar.context())
         val wallpaperDrawable = wallpaperManager.drawable
         if (wallpaperDrawable is BitmapDrawable) {

@@ -36,7 +36,7 @@ class LauncherHelper {
   /// platforms if available. [requestAdaptableIcons] defaults to true.
   /// Set [requestAdaptableIcons] to false to only obtain `RegularAppIcon`.
   ///
-  /// This is an expensive operation. Use [getNewOrUpdated] for updating any changes in [ApplicationCollection]
+  /// This is an expensive operation. Use [updateApplicationCollection] for updating any changes in [ApplicationCollection]
   static Future<ApplicationCollection> getApplications(
       [bool requestAdaptableIcons = true]) async {
     Map<String, bool> _arguments = {
@@ -48,7 +48,7 @@ class LauncherHelper {
 
   /// Returns [ApplicationCollection] of [Application]s installed on this device.
   ///
-  /// This is an expensive operation. Use [getNewOrUpdated] for updating any changes in [ApplicationCollection]
+  /// This is an expensive operation. Use [updateApplicationCollection] for updating any changes in [ApplicationCollection]
   ///
   /// This is now deprecated. Use [getApplications] instead of this method.
   @Deprecated('Use [getApplications] instead. ${Strings.removedIn}')
@@ -69,7 +69,7 @@ class LauncherHelper {
   }
 
   /// Updates & returns [ApplicationCollection] with new or updated packages.
-  static Future<ApplicationCollection> getNewOrUpdated(
+  static Future<ApplicationCollection> updateApplicationCollection(
       ApplicationCollection applications,
       [bool requestAdaptableIcons = true]) async {
     List<Map<String, dynamic>> packageList = [];
@@ -86,8 +86,7 @@ class LauncherHelper {
     };
     List newOrUpdatedPackages =
         await _channel.invokeMethod('getNewOrUpdated', _arguments);
-    applications.update(newOrUpdatedPackages);
-    await applications.update(newOrUpdatedPackages);
+    await applications.updateWith(newOrUpdatedPackages);
     return applications;
   }
 
@@ -151,8 +150,6 @@ class LauncherHelper {
   /// This gets the current wallpaper on the user's device. This method
   /// needs the READ_EXTERNAL_STORAGE permission on Android Oreo & above.
   static Future<Uint8List> get getWallpaper async {
-    print(
-        "[LauncherHelper] External Storage Access permission might be needed for Android Oreo & above.");
     Uint8List data = await _channel.invokeMethod('getWallpaper');
     return data;
   }

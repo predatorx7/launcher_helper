@@ -20,12 +20,6 @@ class IconLayer extends StatelessWidget {
       : layer = Image.memory(bytes),
         this.color = Colors.transparent;
 
-  IconLayer._(
-      {@required this.layer,
-      @required this.bytes,
-      @required this.color,
-      @required this.adaptable});
-
   /// Creates a background layer widget
   static Future<IconLayer> background(Uint8List bytes) async {
     var palette = await PaletteGeneratorUtils.fromUint8List(bytes);

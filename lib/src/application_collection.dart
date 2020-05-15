@@ -26,6 +26,7 @@ class ApplicationCollection extends Iterable {
       Application appInfo = await Application.create(appData);
       _apps.add(appInfo);
     }
+    _apps.sort();
     return ApplicationCollection.fromApplications(_apps);
   }
 
@@ -38,6 +39,8 @@ class ApplicationCollection extends Iterable {
 
   /// Returns [Application] at index `i`.
   Application operator [](int i) => _apps[i];
+
+  @override
 
   /// Creates a [List] containing the [Application] elements of this [ApplicationCollection] instance.
   ///
@@ -129,21 +132,29 @@ class ApplicationCollection extends Iterable {
   @override
   Iterator<Application> get iterator => _apps.iterator;
 
+  /// Updates this [ApplicationCollection] with [LauncherHelper.updateApplicationCollection]
+  ///
+  /// set [sort] to true for sorting this after icons are added.
+  Future<void> update([bool sort = true]) async {
+    await LauncherHelper.updateApplicationCollection(this, sort);
+  }
+
   /// Update this with a list of new or updated packages.
   ///
   /// set [sort] to true for sorting this after icons are added.
-  Future<void> update(List newOrUpdatedPackages, [bool sort = true]) async {
+  Future<void> updateWith(List newOrUpdatedPackages, [bool sort = true]) async {
     if (newOrUpdatedPackages?.isEmpty ?? true) return;
     for (Map i in newOrUpdatedPackages) {
       bool shouldAdd = true;
+      if (i['shouldRemove']) {
+        // App was removed from device
+        this.remove(i['packageName']);
+        continue;
+      }
       for (Application app in this) {
         if (app.packageName == i['packageName']) {
+          // Package was already in the list.
           shouldAdd = false;
-          if (i['shouldRemove']) {
-            // App was removed from device
-            this.remove(app);
-            break;
-          }
           // Checking if needs update
           if (app.versionName == i['versionName'] &&
               app.versionCode == i['versionCode']) {
@@ -151,9 +162,11 @@ class ApplicationCollection extends Iterable {
             break;
           }
           await app.updateFromMap(i);
+          continue;
         }
       }
       if (shouldAdd) {
+        // Package was not in the list
         var newApp = await Application.create(i);
         this.add(newApp);
       }
@@ -161,6 +174,32 @@ class ApplicationCollection extends Iterable {
     if (sort) {
       this.sort();
     }
+  }
+
+  /// Returns true if [Application]s in [other] is same as [Application]s in this.
+  bool operator ==(Object other) {
+    if (!(other is ApplicationCollection)) {
+      return false;
+    }
+    ApplicationCollection typedOther = other;
+    if (typedOther.length != this.length) {
+      return false;
+    }
+    for (Application item in typedOther) {
+      if (!(this.contains(item))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    int _hash = 0;
+    for (Application i in this) {
+      _hash += i.hashCode;
+    }
+    return _hash;
   }
 }
 
@@ -292,7 +331,6 @@ class Application extends Comparable<Application> {
 
   bool operator ==(dynamic other) {
     if (other is String) {
-      if (this.label == other) return true;
       if (this.packageName == other) return true;
     } else if (other is Application) {
       // Not testing Icon as it should only be different for different versions
