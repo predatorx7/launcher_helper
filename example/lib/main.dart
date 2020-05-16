@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:launcher_helper/launcher_helper.dart';
 import 'package:provider/provider.dart';
 
-import 'commons/routes.dart';
 import 'utils/permission_handling.dart';
 
 void main() async {
@@ -17,25 +16,29 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // Requesting runtime permissions
     HandlerOfPermissions().askOnce();
+    // Providers to handle data across the app
     return MultiProvider(
       providers: [
+        // This handles data for a wallpaper
         ChangeNotifierProvider<WallpaperPageModel>(
           create: (context) => WallpaperPageModel(),
         ),
+        // This handles data regarding installed applications
         ChangeNotifierProvider<ApplicationPageModel>(
           create: (context) => ApplicationPageModel(),
         ),
       ],
       child: MaterialApp(
         title: 'Red',
-        onGenerateRoute: generateRoute,
         themeMode: ThemeMode.system,
         theme: ThemeData(primaryColor: Colors.blue),
+        home: Showcase(),
       ),
     );
   }
 }
 
+/// The showcase to present example usage of some methods in the library
 class Showcase extends StatefulWidget {
   @override
   _ShowcaseState createState() => _ShowcaseState();
@@ -44,23 +47,31 @@ class Showcase extends StatefulWidget {
 class _ShowcaseState extends State<Showcase> {
   @override
   Widget build(BuildContext context) {
+    Widget wallpaperPageButton = ShowcaseButton(
+      title: "Wallpaper",
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => WallpaperPage(),
+          ),
+        );
+      },
+    );
+    Widget applicationsPageButton = ShowcaseButton(
+      title: "Applications",
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => ApplicationsPage(),
+          ),
+        );
+      },
+    );
     return Scaffold(
       body: ListView(
         children: [
-          ShowcaseButton(
-            title: "Wallpaper",
-            onPressed: () {
-              Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => WallpaperPage()));
-            },
-          ),
-          ShowcaseButton(
-            title: "Applications",
-            onPressed: () {
-              Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => ApplicationsPage()));
-            },
-          ),
+          wallpaperPageButton,
+          applicationsPageButton,
         ],
       ),
     );
@@ -75,6 +86,7 @@ class WallpaperPage extends StatelessWidget {
         actions: <Widget>[
           FlatButton(
             onPressed: () {
+              // Refreshes to check if wallpaper has been changed
               Provider.of<WallpaperPageModel>(context, listen: false).refresh();
             },
             child: Text('Refresh wallpaper'),
@@ -87,6 +99,7 @@ class WallpaperPage extends StatelessWidget {
             child: ListView(
               shrinkWrap: true,
               children: <Widget>[
+                // Shows wallpaper if available. Else shows a progress indicator
                 model.hasWallpaper
                     ? model.wallpaper
                     : CircularProgressIndicator(),
@@ -100,6 +113,7 @@ class WallpaperPage extends StatelessWidget {
 }
 
 class ApplicationsPage extends StatelessWidget {
+  // a callback which is ran after the frame callback.
   void initPostFrame(BuildContext context) async {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => Provider.of<ApplicationPageModel>(context, listen: false).init(),
@@ -112,11 +126,13 @@ class ApplicationsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
           title: Text(
+            // Number of installed applications which can be launched
             Provider.of<ApplicationPageModel>(context).count.toString(),
           ),
           actions: [
             FlatButton(
               onPressed: () {
+                // Updates the application collection
                 Provider.of<ApplicationPageModel>(context, listen: false)
                     .refresh();
               },
@@ -127,27 +143,35 @@ class ApplicationsPage extends StatelessWidget {
         builder: (context, model, _) {
           if (model.count == 0) {
             return Center(
+              // displays a progress indicator if the list is empty
               child: CircularProgressIndicator(),
             );
           }
           return AppIconShape(
+            // Here the model provides the shape which will be used by AppIconShape consumers
             data: model.iconShape,
             child: ListView.builder(
               itemCount: model.count,
               itemBuilder: (context, index) {
+                // An Application on this collection at index location
                 Application app = model.apps[index];
+                // Other information of the app
                 String subtitle =
                     '${app.packageName}\n${app.versionName}.${app.versionCode}';
                 return ListTile(
+                  // package name is unique hence can be used in key creation
                   key: new ObjectKey(app.packageName),
                   onTap: () {
+                    // Open Icon's shape customizer page
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => ApplicationPage(app),
+                        builder: (context) => ShapeCustomizerPage(app),
                       ),
                     );
                   },
+                  // the icon of this app
                   leading: app.icon,
+                  // the label of this app
                   title: Text(app.label),
                   subtitle: Text(subtitle),
                 );
@@ -160,13 +184,13 @@ class ApplicationsPage extends StatelessWidget {
   }
 }
 
-class ApplicationPage extends StatelessWidget {
+class ShapeCustomizerPage extends StatelessWidget {
   final Application app;
-  const ApplicationPage(
+  const ShapeCustomizerPage(
     this.app, {
     Key key,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ApplicationPageModel>(
@@ -182,6 +206,7 @@ class ApplicationPage extends StatelessWidget {
                 SizedBox(
                   width: 5,
                 ),
+                // Shows a red warning if the icon is not adaptable
                 app.isAdaptableIcon
                     ? SizedBox()
                     : Container(
@@ -207,7 +232,8 @@ class ApplicationPage extends StatelessWidget {
                   children: <Widget>[
                     Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: app.icon,
+                      child: app
+                          .icon, // this icon will be affected by the modifications
                     ),
                   ],
                 ),
@@ -220,15 +246,17 @@ class ApplicationPage extends StatelessWidget {
                       'Open',
                     ),
                     onPressed: () {
-                      app.launch();
+                      app.launch(); // launches the app
                     },
                   ),
                 ),
                 Heading('Change Icon shape'),
                 SizedBox(height: 10),
+                // below buttons allow the shape to be changed with some predefined data
                 OutlineButton(
                   child: Text('Circular'),
                   onPressed: () {
+                    // This constructor creates shape data of a circular icon
                     model.setIconShape(AppIconShapeData.circular());
                   },
                 ),
@@ -251,11 +279,13 @@ class ApplicationPage extends StatelessWidget {
                   },
                 ),
                 Divider(),
+                // Below option changes icon size i.e radius
                 Heading('Change Icon radius ${model.iconShape.radius}'),
                 SizedBox(height: 5),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Slider(
+                    // This slider controls the radius of icons
                     value: model.iconShape.radius,
                     min: 20,
                     max: 100,
@@ -309,7 +339,7 @@ class ShowcaseButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: margin ?? EdgeInsets.all(8),
+      padding: margin ?? EdgeInsets.all(12),
       child: OutlineButton(
         child: Text(title ?? ''),
         onPressed: onPressed,
@@ -328,41 +358,37 @@ class WallpaperPageModel extends ChangeNotifier {
     init();
   }
 
+  // Asynchronously sets wallpaper. Used only once or in the constructor.
   init() async {
-    int before, after;
-    before = DateTime.now().millisecondsSinceEpoch;
+    // Retrieves the wallpaper
     _wallpaperData = await LauncherHelper.getWallpaper;
-    after = DateTime.now().millisecondsSinceEpoch;
-    var difference = after - before;
-    print('Recieved wallpaper in $difference ms');
     wallpaper = Image.memory(_wallpaperData);
     _hasWallpaper = true;
     notifyListeners();
   }
 
+  // Updates wallpaper if changed
   Future<void> refresh() async {
-    int before, after;
-    before = DateTime.now().millisecondsSinceEpoch;
+    // Fresh copy of wallpaper is obtained
     var sub = await LauncherHelper.getWallpaper;
+    // The new and existing wallpaper is compared
     if (sub.length == _wallpaperData.length) {
       bool same = true;
       for (var i = 0; i < sub.length; i++) {
+        // Comparing bytes at same index of both new and old wallpaper
         same = (sub[i] == _wallpaperData[i]);
         if (!same) break;
       }
 
       if (same) {
-        after = DateTime.now().millisecondsSinceEpoch;
-        var difference = after - before;
-        print('Updated applications in $difference ms');
+        // the wallpaper is same as before, hence no changes shall be made/notified
         return;
       }
     }
+    // The new wallpaper is different
+    // Making changes in the app to display new wallpaper 
     _wallpaperData = sub;
     wallpaper = Image.memory(_wallpaperData);
-    after = DateTime.now().millisecondsSinceEpoch;
-    var difference = after - before;
-    print('Updated applications in $difference ms');
     notifyListeners();
   }
 }
@@ -375,8 +401,11 @@ class ApplicationPageModel extends ChangeNotifier {
   bool get hasApplications => _hasApplications;
   AppIconShapeData _iconShape = AppIconShapeData.circular();
 
+  // Describes an icon's shape.
+  // This will be passed to AppIconShape's data.
   AppIconShapeData get iconShape => _iconShape;
 
+  // Setting icon shape through this method.
   void setIconShape(AppIconShapeData iconShape) {
     _iconShape = iconShape;
     notifyListeners();
@@ -384,25 +413,19 @@ class ApplicationPageModel extends ChangeNotifier {
 
   ApplicationPageModel();
 
+  // Asynchronously fetches all applications. Used only once as this is an expensive operation.
   init() async {
     if (hasApplications) return;
-    int before, after;
-    before = DateTime.now().millisecondsSinceEpoch;
+    // Retrievig applications
     _applicationCollection = await LauncherHelper.getApplications();
-    after = DateTime.now().millisecondsSinceEpoch;
-    var difference = after - before;
-    print('Recieved applications in $difference ms');
     _hasApplications = true;
     notifyListeners();
   }
 
+  // Updating changes in the applications
   Future<void> refresh() async {
-    int before, after;
-    before = DateTime.now().millisecondsSinceEpoch;
+    // updates application without much performance issues.
     await _applicationCollection.update();
-    after = DateTime.now().millisecondsSinceEpoch;
-    var difference = after - before;
-    print('Updated applications in $difference ms');
     notifyListeners();
   }
 }

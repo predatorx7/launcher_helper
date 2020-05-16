@@ -2,24 +2,22 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
-import 'dart:typed_data';
-
 import 'package:launcher_helper/launcher_helper.dart';
 import 'icon.dart';
 // TODO(predatorx7): Change [ApplicationCollection] to [Packages] or [PackageCollection] & [Application] to [Package]
 
-/// This [ApplicationCollection] is a List of [Application] (which has application information).
+/// This [ApplicationCollection] is a List of [Application].
 ///
 /// This is not a dart:collection object. It provides a list of [Application] object.
 class ApplicationCollection extends Iterable {
   /// List with [Application]s containing information for apps
   List<Application> _apps;
 
-  /// This [ApplicationCollection] constructor generates a List of [Application] (which has application information) from List<Map> of Apps from MethodChannel.
+  /// This [ApplicationCollection] constructor generates a List of [Application] from List<Map> of Apps from MethodChannel.
   ApplicationCollection.fromApplications(List<Application> appList)
       : this._apps = appList;
 
-  /// This [ApplicationCollection] constructor generates a List of [Application] (which has application information) from List<Map> of Apps from MethodChannel.
+  /// This [ApplicationCollection] constructor generates a List of [Application] from List<Map> of Apps from MethodChannel.
   static Future<ApplicationCollection> fromList(List appList) async {
     List<Application> _apps = [];
     for (var appData in appList) {
@@ -45,7 +43,7 @@ class ApplicationCollection extends Iterable {
   /// Creates a [List] containing the [Application] elements of this [ApplicationCollection] instance.
   ///
   /// The elements are in iteration order.
-  /// The list is fixed-length if [grow`able] is false.
+  /// The list is fixed-length if [growable] is false.
   List<Application> toList({growable = true}) =>
       List<Application>.from(this._apps, growable: growable);
 
@@ -132,16 +130,18 @@ class ApplicationCollection extends Iterable {
   @override
   Iterator<Application> get iterator => _apps.iterator;
 
-  /// Updates this [ApplicationCollection] with [LauncherHelper.updateApplicationCollection]
-  ///
-  /// set [sort] to true for sorting this after icons are added.
+  /// Updates this [ApplicationCollection] with [LauncherHelper.updateApplicationCollection].
+  /// Set [sort] to true to allow sorting.
   Future<void> update([bool sort = true]) async {
     await LauncherHelper.updateApplicationCollection(this, sort);
   }
 
   /// Update this with a list of new or updated packages.
   ///
-  /// set [sort] to true for sorting this after icons are added.
+  /// Set [sort] to true to allow sorting.
+  /// 
+  /// Note: This doesn't update packages which has same version name & version code
+  /// but different icon. This is to remove the overhead of handling icon to improve performance.
   Future<void> updateWith(List newOrUpdatedPackages, [bool sort = true]) async {
     if (newOrUpdatedPackages?.isEmpty ?? true) return;
     for (Map i in newOrUpdatedPackages) {
@@ -176,11 +176,9 @@ class ApplicationCollection extends Iterable {
     }
   }
 
-  /// Returns true if [Application]s in [other] is same as [Application]s in this.
+  /// Returns true if [other] is same as [Application]s in this.
   bool operator ==(Object other) {
-    if (!(other is ApplicationCollection)) {
-      return false;
-    }
+    if (!(other is ApplicationCollection)) return false;
     ApplicationCollection typedOther = other;
     if (typedOther.length != this.length) {
       return false;
@@ -203,16 +201,10 @@ class ApplicationCollection extends Iterable {
   }
 }
 
-/// This [Application] class is a model to contain Application information.
+/// An [Application] which will represent a package.
 ///
-/// This represents a package label as [label], package name as [packageName] and
-/// icon [_iconDataMap] as a [Uint8List].
-///
-/// Flutter Image widget can be obtained from [getIconAsImage].
-/// Color palette for icon can be obtained through [getIconPalette].
-///
-/// Package updates may change their versionName or versionCode. Thus, initially [versionName] & [versionCode] is kept empty when retrieved from [LauncherHelper.getApplications].
-/// Use [refresh] before using these.
+/// It contains package's [label], [packageName] and
+/// [icon].
 class Application extends Comparable<Application> {
   /// Application label
   String _label;
@@ -225,6 +217,7 @@ class Application extends Comparable<Application> {
 
   AppIcon _icon;
 
+  /// The icon which represents this [Application]
   AppIcon get icon => _icon;
 
   var _versionName;
@@ -261,9 +254,10 @@ class Application extends Comparable<Application> {
     );
   }
 
+  /// Returns true [icon] of this package is an adaptable icon.
   bool get isAdaptableIcon => (this._icon is AdaptableIcon) ? true : false;
 
-  /// Launches this application
+  /// Launches this application.
   Future<bool> launch() async {
     return await LauncherHelper.launchApplication(packageName);
   }
@@ -278,7 +272,8 @@ class Application extends Comparable<Application> {
     this._versionName = appInfo.versionName;
   }
 
-  /// Update this [Application] with other if [packageName] is same but [versionName] or [versionCode] is different.
+  /// Updates this [Application] with other 
+  /// if [packageName] is same but [versionName] or [versionCode] is different.
   ///
   /// Returns true if this is updated and false if not.
   bool update(Application other) {
@@ -295,7 +290,7 @@ class Application extends Comparable<Application> {
 
   /// Update this [Application] with a map if [packageName] is same but [versionName] or [versionCode] is different.
   ///
-  /// Returns true if this is updated and false if not.
+  /// Returns true if this is updated.
   Future<bool> updateFromMap(Map other) async {
     if (this.packageName == other['packageName'] &&
         (this._versionCode != other['versionCode'] ||
@@ -334,6 +329,7 @@ class Application extends Comparable<Application> {
     }
   }
 
+  @override
   bool operator ==(dynamic other) {
     if (other is String) {
       if (this.packageName == other) return true;

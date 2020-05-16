@@ -8,7 +8,8 @@ import 'dart:ui' as ui;
 import 'package:palette_generator/palette_generator.dart';
 export 'package:palette_generator/palette_generator.dart';
 
-/// An extension on [PaletteGenerator]
+/// An extension on [PaletteGenerator] which provides palette generation
+/// from image byte data
 extension PaletteGeneratorUtils on PaletteGenerator {
   /// Creates a [PaletteGenerator] from [Uint8List] image data asynchronously.
   ///
@@ -33,8 +34,6 @@ extension PaletteGeneratorUtils on PaletteGenerator {
   /// **Note**:
   /// - You can use `computeLuminance()` method of [dominantColor] of type `Color` obtained from
   /// generated Palette.
-  ///
-  /// Warning: Can only be used on the Main UI thread. Don't use under isolates.
   static Future<PaletteGenerator> fromUint8List(
     Uint8List imageData, {
     Rect region,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:launcher_helper/src/icon_layer.dart';
 
 const double defaultIconRadius = 25;
 
@@ -7,6 +7,7 @@ const double defaultIconScale = 1.5;
 
 enum _ShapeType { circular, square, squircle, teardrop, unknown }
 
+/// The data which defines the properties used by [AppIconShape] consumers.
 class AppIconShapeData {
   /// An immutable set of radii for each corner of an [IconLayer].
   final BorderRadiusGeometry borderRadius;
@@ -21,6 +22,7 @@ class AppIconShapeData {
 
   final _ShapeType shapeType;
 
+  /// The clip behaviour when icon is clipped.
   final Clip clipBehavior;
 
   /// Usually used with [defaultIconRadius]
@@ -65,6 +67,7 @@ class AppIconShapeData {
     }
   }
 
+  /// Creates a raw [AppIconShapeData] with all properties.
   AppIconShapeData({
     this.borderRadius,
     this.radius,
@@ -87,6 +90,7 @@ class AppIconShapeData {
     @required this.clipBehavior,
   });
 
+  /// Creates an [AppIconShapeData] with properties to represent teardrop shape
   factory AppIconShapeData.teardrop() {
     final BorderRadius _borderRadius = _teardropBorderRadius(defaultIconRadius);
     const double _radius = defaultIconRadius;
@@ -97,6 +101,8 @@ class AppIconShapeData {
       shapeType: _ShapeType.teardrop,
     );
   }
+
+  /// Creates an [AppIconShapeData] with properties to represent square shape
   factory AppIconShapeData.square() {
     final BorderRadius _borderRadius = _squareBorderRadius();
     const double _radius = defaultIconRadius;
@@ -107,6 +113,8 @@ class AppIconShapeData {
       shapeType: _ShapeType.square,
     );
   }
+
+  /// Creates an [AppIconShapeData] with properties to represent squircle shape
   factory AppIconShapeData.squircle() {
     final BorderRadius _borderRadius = _squircleBorderRadius(defaultIconRadius);
     const double _radius = defaultIconRadius;
@@ -117,6 +125,8 @@ class AppIconShapeData {
       shapeType: _ShapeType.squircle,
     );
   }
+
+  /// Creates an [AppIconShapeData] with properties to represent circular shape
   factory AppIconShapeData.circular() {
     final BorderRadius _borderRadius = _circularBorderRadius(defaultIconRadius);
     const double _radius = defaultIconRadius;
@@ -128,6 +138,8 @@ class AppIconShapeData {
     );
   }
 
+  /// The default theme. The fallback shape data for all dependent widgets.
+  /// This is used by [AppIconShape.of] when no shape data has been specified.
   factory AppIconShapeData.fallback() {
     return AppIconShapeData.circular();
   }
@@ -155,8 +167,9 @@ class AppIconShapeData {
   }
 }
 
+/// Provides shape to descendant [IconLayer]s.
 class AppIconShape extends StatelessWidget {
-  /// Applies the given icon shape [data] to [child].
+  /// Applies the given icon shape [data] to descendants.
   ///
   /// The [data] and [child] arguments must not be null.
   const AppIconShape({
@@ -167,13 +180,16 @@ class AppIconShape extends StatelessWidget {
         assert(data != null),
         super(key: key);
 
+  /// The data which defines the shape consumers will inherit.
   final AppIconShapeData data;
 
+  /// The descandant widgets on which [data] is applied
   final Widget child;
 
   static final AppIconShapeData _fallbackAppIconShape =
       AppIconShapeData.fallback();
 
+  /// Returns the closest instance of [AppIconShape] in the widget tree
   static AppIconShapeData of(
     BuildContext context,
   ) {

@@ -2,10 +2,16 @@
 
 ## Upcoming
 
-- New example
+- API improvements
+- performance improvements
+- Icon-pack support
+- Visual effects on gesture in Adaptive icons
+
+# 0.4.6
+
 - Documentation updates
 - API stability
-- Icon-pack support
+- Adaptive icon support
 
 ## 0.4.5-dev+2005
 

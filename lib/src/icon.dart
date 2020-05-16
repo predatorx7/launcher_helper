@@ -9,11 +9,23 @@ import '../launcher_helper.dart';
 export 'icon_shape.dart';
 export 'icon_layer.dart';
 
+/// An AppIcon is stateless widget that shows an icon which represents a package.
+///
+/// AppIcons usually have atleast 1 layer. Though you can provide more depending upon your implementation.
+/// Extending classes are expected to override [widget] to return their representation of icon as
+/// a [Widget].
+///
+/// AppIcon makes uses [widget] in [build].
+/// Shape can be modified with [AppIconShape] which applies a shape to AppIcon in descendant widgets.
+///
+/// [foreground] must be the upper most layer of an icon.
 abstract class AppIcon extends StatelessWidget {
-  /// Returns a Layer in [RegularIcon]
-  /// or a Stack widget with [foreground] & [background] [IconLayer]s in [AdaptableIcon]s.
+  /// Returns a Layer in [RegularIcon] or a Stack widget
+  /// with [foreground] & [background] [IconLayer]s in [AdaptableIcon]s.
+  ///
   /// To get [IconLayer]s separately, consider using [foreground] in [RegularIcon] & [foreground] + [background]
   /// in [AdaptableIcon].
+  ///
   /// for example:
   /// ```dart
   /// if(icon is RegularIcon)
@@ -25,8 +37,11 @@ abstract class AppIcon extends StatelessWidget {
   /// ```
   Widget get widget;
 
+  /// The uppermost layer of an icon.
   IconLayer get foreground;
 
+  /// Creates an AppIcon.
+  /// launcher_helper library uses this method to create [RegularIcon] or [AdaptableIcon].
   static Future<AppIcon> getIcon(
     Map iconMap,
   ) async {
@@ -49,6 +64,8 @@ abstract class AppIcon extends StatelessWidget {
   }
 
   @override
+
+  /// AppIcon makes uses [widget] in [build] to represent the icon's user interface.
   Widget build(BuildContext context) {
     final double radius = AppIconShape.of(context).radius ?? defaultIconRadius;
     return AnimatedContainer(
@@ -60,9 +77,11 @@ abstract class AppIcon extends StatelessWidget {
   }
 }
 
+/// A single layered legacy android icon
 class RegularIcon extends AppIcon {
   final Widget _icon;
 
+  /// Creates a [RegularIcon] which has only 1 [IconLayer]
   RegularIcon(IconLayer icon,
       {double radius, double minRadius, double maxRadius})
       : this._icon = icon;
@@ -73,12 +92,22 @@ class RegularIcon extends AppIcon {
   IconLayer get foreground => _icon;
 }
 
+/// An adaptive icon which can change visual properties depening upon gesture
+/// and [AppIconShape].
+///
+/// Shape can be modified with [AppIconShape] which applies a shape to AppIcon in descendant widgets.
 class AdaptableIcon extends AppIcon {
   final Widget _stack;
   final IconLayer _foreground;
-  IconLayer get foreground => _foreground;
   final IconLayer _background;
+
+  /// The foregroud layer of this AppIcon.
+  @override
+  IconLayer get foreground => _foreground;
+
+  /// The background layer of this AppIcon.
   IconLayer get background => _background;
+
   AdaptableIcon(IconLayer foreground, IconLayer background,
       {double radius, double minRadius, double maxRadius})
       : this._foreground = foreground,

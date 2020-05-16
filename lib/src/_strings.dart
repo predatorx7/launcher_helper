@@ -1,5 +1,5 @@
 class Strings {
-  static const String removedIn = 'This will be removed in 1.x';
+  static const String willRemovedIn = 'This will be removed in 1.x';
   static const String packageName = 'packageName';
   static const String versionName = 'versionName';
   static const String versionCode = 'versionCode';
