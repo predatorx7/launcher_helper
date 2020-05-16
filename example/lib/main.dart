@@ -386,7 +386,7 @@ class WallpaperPageModel extends ChangeNotifier {
       }
     }
     // The new wallpaper is different
-    // Making changes in the app to display new wallpaper 
+    // Making changes in the app to display new wallpaper
     _wallpaperData = sub;
     wallpaper = Image.memory(_wallpaperData);
     notifyListeners();

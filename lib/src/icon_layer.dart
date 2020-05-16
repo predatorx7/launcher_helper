@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../launcher_helper.dart';
 
 /// Represents a layer of visual interface used in an icon
-/// 
+///
 /// It's visual properties can be modified with [AppIconShape]
 class IconLayer extends StatelessWidget {
   final Widget layer;
@@ -49,7 +49,7 @@ class IconLayer extends StatelessWidget {
         );
       }
       // There is 1 color in the image.
-      // Creating Layer fill with 1 color as palette has only 1 color  
+      // Creating Layer fill with 1 color as palette has only 1 color
       return IconLayer._colored(
         colors.first,
         bytes,
@@ -66,7 +66,7 @@ class IconLayer extends StatelessWidget {
   }
 
   /// Creates a foreground layer widget.
-  /// 
+  ///
   /// Set [adaptable] to true to keep this layer adaptable.
   static IconLayer foreground(Uint8List bytes, bool adaptable) {
     return IconLayer._image(
@@ -112,7 +112,6 @@ class IconLayer extends StatelessWidget {
     return decoration;
   }
 
-  
   /// Describes the part of the user interface represented by this widget.
   ///
   /// Applies scale transformation & clipping if needed.

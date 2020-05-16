@@ -24,7 +24,7 @@
 - Documentation updates
 - API internal improvements
 - version semantic now will follow:
-  - `version + hotfixes` &nbsp;for stable builds.
+  - `version + hotfixe.n` &nbsp;for stable builds.
   - `version - pre-release + yymm` &nbsp;for any pre-release builds.
 
 ## 0.4.3-dev+202004300253

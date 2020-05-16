@@ -94,7 +94,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "0.4.6"
+    version: "0.4.6+hotfix.1"
   matcher:
     dependency: transitive
     description:

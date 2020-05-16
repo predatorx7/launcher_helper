@@ -139,7 +139,7 @@ class ApplicationCollection extends Iterable {
   /// Update this with a list of new or updated packages.
   ///
   /// Set [sort] to true to allow sorting.
-  /// 
+  ///
   /// Note: This doesn't update packages which has same version name & version code
   /// but different icon. This is to remove the overhead of handling icon to improve performance.
   Future<void> updateWith(List newOrUpdatedPackages, [bool sort = true]) async {
@@ -272,7 +272,7 @@ class Application extends Comparable<Application> {
     this._versionName = appInfo.versionName;
   }
 
-  /// Updates this [Application] with other 
+  /// Updates this [Application] with other
   /// if [packageName] is same but [versionName] or [versionCode] is different.
   ///
   /// Returns true if this is updated and false if not.

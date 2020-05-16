@@ -122,7 +122,7 @@ class LauncherHelper {
 
   /// Returns application icon data in a map. Throws "No_Such_App_Found" exception if app or app-icon doesn't exists for the package.
   /// Result is a Map in format
-  /// 
+  ///
   /// ```
   /// {'iconData':<Uint8List> ?? null, 'iconForegroundData':<Uint8List> ?? null,'iconBackgroundData':<Uint8List> ?? null}
   /// ```

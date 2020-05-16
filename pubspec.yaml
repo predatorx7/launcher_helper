@@ -1,6 +1,6 @@
 name: launcher_helper
 description: To help create an android launcher this plugin provides wallpaper, installed package details, etc in an easy way.
-version: 0.4.6
+version: 0.4.6+hotfix.1
 # author: Mushaheed Syed <smushaheed@gmail.com>
 homepage: https://github.com/predatorx7/launcher_helper
 
