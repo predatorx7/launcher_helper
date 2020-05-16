@@ -7,6 +7,12 @@
 - Icon-pack support
 - Visual effects on gesture in Adaptive icons
 
+# 0.4.6+hotfix.1
+
+- Removed unnecessary ios files
+- formatted files
+- documentation edits
+
 # 0.4.6
 
 - Documentation updates

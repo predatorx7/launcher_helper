@@ -2,16 +2,16 @@
 
 [![pub package](https://img.shields.io/pub/v/launcher_helper.svg)](https://pub.dartlang.org/packages/launcher_helper)
 
-This plugin is made to help you when building a launcher for Android. `launcher_helper` is Androidx compatible.
+This plugin is made to help you when building a launcher for Android.
 
 It offers the following features:
 
 - Getting list of installed applications with their icon and other details.
-- Support for Adaptive Icons
+- Support for Adaptive Icons.
 - Launching application and getting phone's wallpaper.
-- Picking prominent colors from an image (wallpaper, icon, etc) for use in UI, etc.
+- Support for updating application information (asynchrnously)
 
-Only Android is supported. Tested on android 10, pie and oreo.
+Only Android is supported. `launcher_helper` is Androidx compatible.
 
 ## Usage
 
