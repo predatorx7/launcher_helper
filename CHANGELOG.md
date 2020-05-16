@@ -6,6 +6,18 @@
 - performance improvements
 - Icon-pack support
 - Visual effects on gesture in Adaptive icons
+- Isolate support or use of multiplethreads internally
+- Apps to have a method for uninstallation & open their app info
+- Method to set system homescreen wallpaper
+- Method to open default wallpaper app (through `pm.resolveActivity`)
+- Use of faster algorithms internally
+- version semantic now will follow:
+  - `version + hotfix.hotfix-number` &nbsp;for stable builds.
+  - `version - pre-release + mm<pre-release version in month>` &nbsp;for any pre-release builds.
+
+# 0.4.7-dev+053
+
+...
 
 # 0.4.6+hotfix.1
 
