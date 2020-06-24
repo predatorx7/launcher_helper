@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
-import '../launcher_helper.dart';
+import '../palette_generator_utils.dart';
+import '../_launcher_helper_old.dart';
+import 'icon_shape.dart';
 
 /// Represents a layer of visual interface used in an icon
 ///

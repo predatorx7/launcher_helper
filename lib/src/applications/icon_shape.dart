@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:launcher_helper/src/icon_layer.dart';
+import 'icon_layer.dart' show IconLayer;
 
 const double defaultIconRadius = 25;
 
@@ -7,7 +7,8 @@ const double defaultIconScale = 1.5;
 
 enum _ShapeType { circular, square, squircle, teardrop, unknown }
 
-/// The data which defines the properties used by [AppIconShape] consumers.
+/// The data which defines the properties used by consumers when configuring visual
+/// interface of widget.
 class AppIconShapeData {
   /// An immutable set of radii for each corner of an [IconLayer].
   final BorderRadiusGeometry borderRadius;
@@ -167,7 +168,10 @@ class AppIconShapeData {
   }
 }
 
-/// Provides shape to descendant [IconLayer]s.
+/// Provides data for shape & size to descendant consumers for configuring visual
+/// interface of widget.
+///
+/// Used by [IconLayer].
 class AppIconShape extends StatelessWidget {
   /// Applies the given icon shape [data] to descendants.
   ///

@@ -31,9 +31,7 @@ extension PaletteGeneratorUtils on PaletteGenerator {
   ///
   /// The [imageData] must not be null.
   ///
-  /// **Note**:
-  /// - You can use `computeLuminance()` method of [dominantColor] of type `Color` obtained from
-  /// generated Palette.
+  /// The colors near black, white and low saturation red will not be in generated palette by default.
   static Future<PaletteGenerator> fromUint8List(
     Uint8List imageData, {
     Rect region,

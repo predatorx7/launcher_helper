@@ -14,7 +14,13 @@
 // in [LauncherHelper] class in a later build. (v2 or v1 based on this library's popularity & feedback)
 library launcher_helper;
 
-export 'src/_launcher_helper.dart';
-export 'src/palette_generator.dart';
-export 'src/application_collection.dart';
-export 'src/icon.dart';
+export 'src/palette_generator_utils.dart';
+export 'src/applications/application_collection.dart';
+export 'src/applications/icon_shape.dart';
+export 'src/applications/icon.dart';
+
+// NEW
+// export 'src/_launcher_helper.dart';
+
+// OLD
+export 'src/_launcher_helper_old.dart';

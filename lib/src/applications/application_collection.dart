@@ -2,7 +2,8 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
-import 'package:launcher_helper/launcher_helper.dart';
+import '../_launcher_helper_old.dart';
+import '../_strings.dart';
 import 'icon.dart';
 // TODO(predatorx7): Change [ApplicationCollection] to [Packages] or [PackageCollection] & [Application] to [Package]
 
@@ -146,18 +147,18 @@ class ApplicationCollection extends Iterable {
     if (newOrUpdatedPackages?.isEmpty ?? true) return;
     for (Map i in newOrUpdatedPackages) {
       bool shouldAdd = true;
-      if (i['shouldRemove']) {
+      if (i[Strings.shouldRemove]) {
         // App was removed from device
-        this.remove(i['packageName']);
+        this.remove(i[Strings.packageName]);
         continue;
       }
       for (Application app in this) {
-        if (app.packageName == i['packageName']) {
+        if (app.packageName == i[Strings.packageName]) {
           // Package was already in the list.
           shouldAdd = false;
           // Checking if needs update
-          if (app.versionName == i['versionName'] &&
-              app.versionCode == i['versionCode']) {
+          if (app.versionName == i[Strings.versionName] &&
+              app.versionCode == i[Strings.versionCode]) {
             // Doesn't need update
             break;
           }
@@ -244,12 +245,12 @@ class Application extends Comparable<Application> {
 
   /// Asynchronously creates [Application] from map
   static Future<Application> create(Map applicationMap) async {
-    AppIcon icon = await AppIcon.getIcon(applicationMap['icon']);
+    AppIcon icon = await AppIcon.getIcon(applicationMap[Strings.icon]);
     return Application(
-      label: applicationMap["label"],
-      packageName: applicationMap['packageName'],
-      versionCode: applicationMap['versionCode'],
-      versionName: applicationMap['versionName'],
+      label: applicationMap[Strings.label],
+      packageName: applicationMap[Strings.packageName],
+      versionCode: applicationMap[Strings.versionCode],
+      versionName: applicationMap[Strings.versionName],
       icon: icon,
     );
   }
@@ -292,13 +293,13 @@ class Application extends Comparable<Application> {
   ///
   /// Returns true if this is updated.
   Future<bool> updateFromMap(Map other) async {
-    if (this.packageName == other['packageName'] &&
-        (this._versionCode != other['versionCode'] ||
-            this._versionName != other['versionName'])) {
-      this._label = other['label'];
-      this._icon = await AppIcon.getIcon(other['icon']);
-      this._versionCode = other['versionCode'];
-      this._versionName = other['versionName'];
+    if (this.packageName == other[Strings.packageName] &&
+        (this._versionCode != other[Strings.versionCode] ||
+            this._versionName != other[Strings.versionName])) {
+      this._label = other[Strings.label];
+      this._icon = await AppIcon.getIcon(other[Strings.icon]);
+      this._versionCode = other[Strings.versionCode];
+      this._versionName = other[Strings.versionName];
       return true;
     }
     return false;

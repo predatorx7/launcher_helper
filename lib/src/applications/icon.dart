@@ -1,23 +1,19 @@
 import 'dart:async';
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:launcher_helper/src/_strings.dart';
 
-import '../launcher_helper.dart';
-export 'icon_shape.dart';
-export 'icon_layer.dart';
+import '../_strings.dart';
+import 'icon_shape.dart';
+import 'icon_layer.dart';
 
 /// An AppIcon is stateless widget that shows an icon which represents a package.
 ///
 /// AppIcons usually have atleast 1 layer. Though you can provide more depending upon your implementation.
+///
 /// Extending classes are expected to override [widget] to return their representation of icon as
-/// a [Widget].
+/// a [Widget] because this uses [widget] in it's [build] method.
 ///
-/// AppIcon makes uses [widget] in [build].
-/// Shape can be modified with [AppIconShape] which applies a shape to AppIcon in descendant widgets.
-///
+/// Use [AppIconShape] to change size of AppIcon in descendant widgets.
 /// [foreground] must be the upper most layer of an icon.
 abstract class AppIcon extends StatelessWidget {
   /// Returns a Layer in [RegularIcon] or a Stack widget
@@ -78,6 +74,8 @@ abstract class AppIcon extends StatelessWidget {
 }
 
 /// A single layered legacy android icon
+///
+/// Use [AppIconShape] to change size of AppIcon in descendant widgets.
 class RegularIcon extends AppIcon {
   final Widget _icon;
 
@@ -92,10 +90,10 @@ class RegularIcon extends AppIcon {
   IconLayer get foreground => _icon;
 }
 
-/// An adaptive icon which can change visual properties depening upon gesture
-/// and [AppIconShape].
+/// An adaptive icon which can change visual properties based upon gesture
+/// or [AppIconShape].
 ///
-/// Shape can be modified with [AppIconShape] which applies a shape to AppIcon in descendant widgets.
+/// Use [AppIconShape] to change shape & size of AppIcon in descendant widgets.
 class AdaptableIcon extends AppIcon {
   final Widget _stack;
   final IconLayer _foreground;
